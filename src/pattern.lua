@@ -205,7 +205,7 @@ generate_string = function(length, pattern)
 
 	while #r < length do
 		-- BetterRandom is supplied from C...
-		local i = BetterRandom(utf8.len(true_pattern))
+		local i = BetterRandom(utf8.len(true_pattern)) + 1
 		r[#r + 1] = utf8_sub(true_pattern, i, i)
 	end
 
