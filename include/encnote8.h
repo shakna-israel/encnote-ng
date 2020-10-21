@@ -1,0 +1,57 @@
+#ifndef LIB_ENCNOTE8
+#define LIB_ENCNOTE8
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
+
+#include <sodium.h>
+#include <sodium/crypto_box.h>
+
+#include <unistd.h>
+#include <sys/stat.h>
+#include <getopt.h>
+
+struct Field {
+	size_t length;
+	char* content;
+};
+
+/*
+	Field.content = NULL on failure.
+	Caller must free.
+*/
+struct Field get_field(lua_State* LuaState, const char* key, size_t key_len);
+
+/*
+	false on memory failure.
+*/
+bool set_field(lua_State* LuaState, const char* key, size_t key_len, const char* value, size_t value_len);
+
+/*
+	NULL on memory failure.
+	Caller must free.
+*/
+struct Field dump_data(lua_State* LuaState);
+
+/*
+	Encrypt current data to file.
+	Generates a _new_ keyfile.
+
+	False on failure. (Memory, encryption, etc.)
+*/
+bool encrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile);
+
+/*
+	Decrypt data from datafile to our Lua table.
+
+	False on failure. (Memory, encryption, etc.)
+*/
+bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile);
+
+#endif
