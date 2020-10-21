@@ -39,6 +39,17 @@ bool set_field(lua_State* LuaState, const char* key, size_t key_len, const char*
 struct Field dump_data(lua_State* LuaState);
 
 /*
+	Write `length` random bytes to field `name`.
+*/
+bool generate(lua_State* LuaState, const char* name, size_t length);
+
+/*
+	Initialise a Lua state from a given keyfile and datafile.
+	Failure to decrypt, such as because non-existent files, will be ignored.
+*/
+void init_data(lua_State* L, const char* keyfilename, const char* datafilename);
+
+/*
 	Encrypt current data to file.
 	Generates a _new_ keyfile.
 
@@ -52,5 +63,11 @@ bool encrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	False on failure. (Memory, encryption, etc.)
 */
 bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile);
+
+/*
+	Get the $XDG_DATA_DIR/encnote-ng/ path, or nearest.
+	NULL on failure.
+*/
+char* get_data_dir();
 
 #endif

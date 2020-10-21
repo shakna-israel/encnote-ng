@@ -4,7 +4,7 @@ INCLUDES=-Iinclude
 OUTNAME=encnote8
 
 all: cli.h
-	$(CC) -g $(LIBSODIUM) $(LIBLUA) $(INCLUDES) src/main.c -o $(OUTNAME)
+	$(CC) -g $(LIBSODIUM) $(LIBLUA) $(INCLUDES) src/encnote8.c src/main.c -o $(OUTNAME)
 
 .PHONY: cli.h
 cli.h:
