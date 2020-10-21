@@ -1,4 +1,5 @@
 #include <encnote8.h>
+#include <cli.h>
 
 bool set_field(lua_State* LuaState, const char* key, size_t key_len, const char* value, size_t value_len) {
 	// Put our data onto the stack...
@@ -262,6 +263,8 @@ bool generate(lua_State* LuaState, const char* name, size_t length) {
 
 	sodium_memzero(data, length);
 	free(data);
+
+	return true;
 }
 
 void init_data(lua_State* L, const char* keyfilename, const char* datafilename) {
@@ -331,14 +334,13 @@ void run_ls_mode(lua_State* L) {
 	luaL_dostring(L, "for k, v in pairs(ENCNOTE_DATA) do print(#v, k) end");
 }
 
-void run_generate_mode(lua_State* L, const char* argfile) {
-	printf("%s\n", "Generating...");
-
+void run_generate_mode(lua_State* L, const char* argfile, size_t length) {
 	if(argfile == NULL) {
+		// TODO: Error...
 		return;
 	}
-	// TODO: Allow setting length...
-	if(generate(L, argfile, 20) != true) {
+	
+	if(generate(L, argfile, length) != true) {
 		fprintf(stderr, "ERROR: Generate failed.\n");
 	}
 }
@@ -384,136 +386,172 @@ enum MODES {
 };
 
 int main(int argc, char* argv[]) {
-	// TODO: Parse CLI args here...
+	lua_State* CLI_LUA = luaL_newstate();	
+	luaL_openlibs(CLI_LUA);
+
+	// Global cli stuff...
+	char* datadir = get_data_dir();
+	size_t current_mode = INVALID_MODE;
 	char* keyfilename = NULL;
 	char* datafilename = NULL;
-	char* data_dir = get_data_dir();
 	char* argfile = NULL;
+	size_t arglength = 0;
 
-	int c;
-    int digit_optind = 0;
-    int current_mode = INVALID_MODE;
-    int should_exit = -1;
+	lua_createtable(CLI_LUA, 0, 0);
+	lua_setglobal(CLI_LUA, "arg");
 
-    while (1) {
-        int this_option_optind = optind ? optind : 1;
-        int option_index = 0;
-        static struct option long_options[] = {
-            {"mode",        required_argument, 0,  'm'},
-            {"keyfile",     required_argument, 0,  'k'},
-            {"datafile",    required_argument, 0,  'd'},
-            {"datadir",     no_argument,       0,  'D'},
-            {"file",        required_argument, 0,  'f'},
-            {"help",        optional_argument, 0,  'h'},
-            {0,         0,                     0,   0 }
-        };
+	for(size_t i = 0; i < argc; i++) {
+		lua_getglobal(CLI_LUA, "arg");
+		lua_pushnumber(CLI_LUA, i);
+		lua_pushstring(CLI_LUA, argv[i]);
 
-       c = getopt_long(argc, argv, "m:k:d:f:h?D",
-                 long_options, &option_index);
-        if (c == -1)
-            break;
+		// Set the key/value in the table...
+		lua_settable(CLI_LUA, -3);
+	}
 
-       switch (c) {
-       	case 0:
-       	case 'm':
-       		if(optarg) {
-       			if(strcmp(optarg, "dump") == 0) {
-       				current_mode = DUMP_MODE;
-       			} else
-       			if(strcmp(optarg, "ls") == 0) {
-       				current_mode = LS_MODE;
-       			} else
-       			if(strcmp(optarg, "generate") == 0) {
-       				current_mode = GENERATE_MODE;
-       			} else {
-       				fprintf(stderr, "ERROR: --%s supplied with invalid mode.\n", long_options[option_index].name);
-       				should_exit = 1;
-       			}
-       		} else {
-       			fprintf(stderr, "ERROR: --%s supplied without mode.\n", long_options[option_index].name);
-       			should_exit = 1;
-       		}
-       		break;
-       	case 1:
-       	case 'k':
-       		if(optarg) {
-       			keyfilename = strdup(optarg);
-       			// TODO: Safety
-       		} else {
-       			fprintf(stderr, "ERROR: --%s supplied without filename.\n", long_options[option_index].name);
-       			should_exit = 1;
-       		}
-       		break;
-       	case 2:
-       	case 'd':
-       		if(optarg) {
-       			datafilename = strdup(optarg);
-       			// TODO: Safety
-       		} else {
-       			fprintf(stderr, "ERROR: --%s supplied without filename.\n", long_options[option_index].name);
-       			should_exit = 1;
-       		}
-       		break;
-       	case 3:
-       	case 'D':
-       		if(data_dir == NULL) {
-       			fprintf(stderr, "NO DATA DIRECTORY FOUND.\n");
-       		} else {
-       			printf("%s\n", data_dir);
-       		}
-       		should_exit = 0;
-       	case 4:
-       	case 'f':
-       		if(optarg) {
-       			argfile = strdup(optarg);
-       			// TODO: Safety
-       		} else {
-       			fprintf(stderr, "ERROR: --%s supplied without name.\n", long_options[option_index].name);
-       			should_exit = 1;
-       		}
-       	case 5:
-       	case 'h':
-       		if(optarg) {
-       			run_help(argv[0], optarg);
-       			should_exit = 0;
-       		} else {
-       			run_help(argv[0], NULL);
-       			should_exit = 0;
-       		}
-        }
-    }
+	// Parse arguments into cli_args table
+	luaL_dostring(CLI_LUA, src_cli_lua);
+	
+	// TODO: Disable this line...
+	//luaL_dostring(CLI_LUA, "for k, v in pairs(cli_args) do print(k, v) end");
 
-   if(optind < argc) {
-        printf("non-option ARGV-elements: ");
-        while (optind < argc)
-            printf("%s ", argv[optind++]);
-        printf("\n");
-    }
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "progname");
+	const char* progname_tmp = lua_tostring(CLI_LUA, -1);
+	char* progname = strdup(progname_tmp);
+	if(progname == NULL) {
+		// TODO: Safety
+	}
 
-    if(current_mode == INVALID_MODE) {
-    	fprintf(stderr, "ERROR: --mode not set.\n");
-    	run_help(argv[0], NULL);
-    	should_exit = 1;
-    }
+	// Check if help called
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "help");
+	int t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TBOOLEAN) {
+		lua_pop(CLI_LUA, -1);
 
-    if(should_exit != -1) {
-    	return should_exit;
-    }
+		printf("Usage: %s [options...]\n", progname);
+		// TODO: Options...
 
-    // BUG: If --file is set, flow control breaks...
+		// Cleanup and close.
+		free(progname);
+		free(datadir);
+		lua_close(CLI_LUA);
+		return 0;
+	}
 
-    if(keyfilename == NULL) {
+	// Check for datadir
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "datadir");
+	t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TBOOLEAN) {
+		lua_pop(CLI_LUA, -1);
+
+		if(datadir != NULL) {
+			printf("%s\n", datadir);
+			free(datadir);
+			free(progname);
+		} else {
+			fprintf(stderr, "%s\n", "NOT DATADIR FOUND!");
+		}
+
+		// Cleanup and close.
+		lua_close(CLI_LUA);
+		return 0;
+	}
+
+	// Check for mode
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "mode");
+	t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TSTRING) {
+		const char* mode_string = lua_tostring(CLI_LUA, -1);
+
+		if(strcmp(mode_string, "dump") == 0) {
+			current_mode = DUMP_MODE;
+		} else
+		if(strcmp(mode_string, "ls") == 0) {
+			current_mode = LS_MODE;
+		} else
+		if(strcmp(mode_string, "generate") == 0) {
+			current_mode = GENERATE_MODE;
+		} else {
+			fprintf(stderr, "ERROR: %s\n", "Invalid or no mode set.");
+			free(datadir);
+			free(progname);
+			lua_close(CLI_LUA);
+			return 1;	
+		}
+	} else {
+		fprintf(stderr, "ERROR: %s\n", "Invalid or no mode set.");
+		free(datadir);
+		free(progname);
+		lua_close(CLI_LUA);
+		return 1;
+	}
+
+	// Check for argfile
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "file");
+	t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TSTRING) {
+		const char* arg_file_tmp = lua_tostring(CLI_LUA, -1);
+		argfile = strdup(arg_file_tmp);
+		if(argfile == NULL) {
+			// TODO: Safety
+		}
+	}
+
+	// Check for length
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "length");
+	t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TNUMBER) {
+		arglength = lua_tonumber(CLI_LUA, -1);
+	}
+
+	// Check for keyfile
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "keyfile");
+	t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TSTRING) {
+		const char* tmp = lua_tostring(CLI_LUA, -1);
+		keyfilename = strdup(tmp);
+		if(keyfilename == NULL) {
+			// TODO: Safety
+		}
+	} else {
+		lua_pop(CLI_LUA, -1);
+	}
+
+	// Check for datafile
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "datafile");
+	t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TSTRING) {
+		const char* tmp = lua_tostring(CLI_LUA, -1);
+		datafilename = strdup(tmp);
+		if(datafilename == NULL) {
+			// TODO: Safety
+		}
+	} else {
+		lua_pop(CLI_LUA, -1);
+	}
+
+	lua_close(CLI_LUA);
+
+	if(keyfilename == NULL) {
     	// Set one by XDG fallbacks...
 		// $XDG_DATA_HOME/encnote8/key
 		// $HOME/.local/share/encnote8/key
 
-		if(data_dir == NULL) {
+		if(datadir == NULL) {
 			// TODO: Allocation/search failure!
 		} else {
 			// Ensure data directory exists...
 			struct stat st = {0};
-			if(stat(data_dir, &st) == -1) {
-    			mkdir(data_dir, 0755);
+			if(stat(datadir, &st) == -1) {
+    			mkdir(datadir, 0755);
 			}
 		}
 
@@ -521,14 +559,14 @@ int main(int argc, char* argv[]) {
 
 		char* path;
 
-		path = calloc(strlen(data_dir) + strlen(tail) + 1, sizeof(char));
+		path = calloc(strlen(datadir) + strlen(tail) + 1, sizeof(char));
 		if(path == NULL) {
 			// TODO: Allocation failure...
 		}
 
-		memcpy(path, data_dir, strlen(data_dir));
-		memcpy(path + strlen(data_dir), tail, strlen(tail));
-		path[strlen(data_dir) + strlen(tail)] = 0;
+		memcpy(path, datadir, strlen(datadir));
+		memcpy(path + strlen(datadir), tail, strlen(tail));
+		path[strlen(datadir) + strlen(tail)] = 0;
 
 		keyfilename = path;
     }
@@ -538,13 +576,13 @@ int main(int argc, char* argv[]) {
 		// $XDG_DATA_HOME/encnote8/data
 		// $HOME/.local/share/encnote8/data
 
-		if(data_dir == NULL) {
+		if(datadir == NULL) {
 			// TODO: Allocation/search failure!
 		} else {
 			// Ensure data directory exists...
 			struct stat st = {0};
-			if(stat(data_dir, &st) == -1) {
-    			mkdir(data_dir, 0755);
+			if(stat(datadir, &st) == -1) {
+    			mkdir(datadir, 0755);
 			}
 		}
 
@@ -552,64 +590,45 @@ int main(int argc, char* argv[]) {
 
 		char* path;
 
-		path = calloc(strlen(data_dir) + strlen(tail) + 1, sizeof(char));
+		path = calloc(strlen(datadir) + strlen(tail) + 1, sizeof(char));
 		if(path == NULL) {
 			// TODO: Allocation failure...
 		}
 
-		memcpy(path, data_dir, strlen(data_dir));
-		memcpy(path + strlen(data_dir), tail, strlen(tail));
-		path[strlen(data_dir) + strlen(tail)] = 0;
+		memcpy(path, datadir, strlen(datadir));
+		memcpy(path + strlen(datadir), tail, strlen(tail));
+		path[strlen(datadir) + strlen(tail)] = 0;
 
 		datafilename = path;
     }
 
-    // FINISH setting CLI Args.
-
-	// Initialise Lua
-	lua_State* L = luaL_newstate();
+    // Initialise...
+    lua_State* L = luaL_newstate();
 	init_data(L, keyfilename, datafilename);
 
-	switch(current_mode) {
-		case DUMP_MODE:
-			run_dump_mode(L);
-			break;
-		case LS_MODE:
-			run_ls_mode(L);
-			break;
-		case(GENERATE_MODE):
-			run_generate_mode(L, argfile);
-			if(argfile != NULL) {
-				free(argfile);
-			}
-			break;
-		default:
-			printf("%s\n", "ERROR: CRAP! Mode fell through...");
-			break;
-	}
+	// Check what we want to do...
+    switch(current_mode) {
+    	case DUMP_MODE:
+    		run_dump_mode(L);
+    		break;
+    	case LS_MODE:
+    		run_ls_mode(L);
+    		break;
+    	case GENERATE_MODE:
+    		run_generate_mode(L, argfile, arglength);
+    		break;
+    }
 
-	/*
-
-	e = decrypt_data(L, "key", "data");
-	if(e == false) {
-		fprintf(stderr, "%s\n", "ERROR: Something went wrong whilst decrypting.");
-	}
-
-	struct Field f = dump_data(L);
-	printf("%s\n", f.content);
-	free(f.content);
-	*/
-
-	// Re-encrypt before exit...
-	bool e = encrypt_data(L, keyfilename, datafilename);
+    bool e = encrypt_data(L, keyfilename, datafilename);
 	if(e == false) {
 		fprintf(stderr, "%s\n", "ERROR: Something went wrong whilst encrypting.");
 	}
 
-	// Cleanup Lua
-	free(keyfilename);
 	free(datafilename);
-	free(data_dir);
-	lua_close(L);
-	return 0;
+	free(keyfilename);
+	free(progname);
+	if(argfile != NULL) {
+		free(argfile);
+	}
+	free(datadir);
 }

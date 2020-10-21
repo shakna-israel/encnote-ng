@@ -15,7 +15,6 @@
 
 #include <unistd.h>
 #include <sys/stat.h>
-#include <getopt.h>
 
 struct Field {
 	size_t length;
