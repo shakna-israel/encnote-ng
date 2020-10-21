@@ -738,4 +738,5 @@ int main(int argc, char* argv[]) {
 		free(argfile);
 	}
 	free(datadir);
+	lua_close(L);
 }
