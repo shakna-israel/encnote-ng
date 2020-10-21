@@ -278,6 +278,13 @@ bool generate(lua_State* LuaState, const char* name, size_t length, char* patter
 
 	luaL_dostring(L, "return generate_string(length, pattern)");
 
+	int t = lua_type(L, -1);
+	if(t != LUA_TSTRING) {
+		// Error happened in Lua land.
+		lua_close(L);
+		return false;
+	}
+
 	// Get the value and its length
 	size_t pat_length = 0;
 	const char* patstr = lua_tolstring(L, -1, &pat_length);
