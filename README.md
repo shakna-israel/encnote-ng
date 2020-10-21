@@ -32,7 +32,7 @@ This is not a state-of-the-art encryption tool, this is a "good enough" encrypti
 
 + `pkg-config`
 
-+ `xxd`
++ `xxd` (Only for the CLI tool).
 
 + [libsodium](http://libsodium.org/), including development headers.
 
