@@ -57,6 +57,8 @@ You'll also need to link again Lua 5.3, and libsodium:
 
 Then the basic approach might be:
 
+	#include <encnote8.h>
+
     const char* keyfilename = "/some/key";
     const char* datafilename = "/some/data";
 
