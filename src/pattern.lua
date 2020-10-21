@@ -190,3 +190,24 @@ expand_pattern = function(pattern)
 
 	return table.concat(pats2)
 end
+
+utf8_sub = function(s,i,j)
+    i=utf8.offset(s,i)
+    j=utf8.offset(s,j+1)-1
+    return string.sub(s,i,j)
+end
+
+
+generate_string = function(length, pattern)
+	local true_pattern = expand_pattern(pattern)
+
+	local r = {}
+
+	while #r < length do
+		-- BetterRandom is supplied from C...
+		local i = BetterRandom(utf8.len(true_pattern))
+		r[#r + 1] = utf8_sub(true_pattern, i, i)
+	end
+
+	return table.concat(r)
+end

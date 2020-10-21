@@ -248,6 +248,15 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	return true;
 }
 
+int LuaRandom(lua_State* L) {
+	int upper_bound = lua_tointeger(L, 1);
+
+	uint32_t result = randombytes_uniform(upper_bound);
+
+	lua_pushinteger(L, result);
+	return 1;
+}
+
 bool generate(lua_State* LuaState, const char* name, size_t length, char* pattern) {
 	// Default pattern
 	if(pattern == NULL) {
@@ -257,28 +266,30 @@ bool generate(lua_State* LuaState, const char* name, size_t length, char* patter
 	// Expand the pattern...
 	lua_State* L = luaL_newstate();
 	luaL_openlibs(L);
+	lua_register(L, "BetterRandom", LuaRandom);
+
 	luaL_dostring(L, src_pattern_lua);
 
 	lua_pushstring(L, pattern);
 	lua_setglobal(L, "pattern");
 
-	luaL_dostring(L, "expand_pattern(pattern)");
+	lua_pushinteger(L, length);
+	lua_setglobal(L, "length");
+
+	luaL_dostring(L, "return generate_string(length, pattern)");
 
 	// Get the value and its length
 	size_t pat_length = 0;
 	const char* patstr = lua_tolstring(L, -1, &pat_length);
 
-	char* data = calloc(length, sizeof(char));
+	char* data = calloc(pat_length + 1, sizeof(char));
 	// TODO: Safety
-
-	for(size_t i = 0; i < length; i++) {
-		// TODO: Pattern of allowed bytes!
-		uint32_t c = randombytes_uniform(pat_length);
-		data[i] = patstr[c];
+	for(size_t i = 0; i < pat_length; i++) {
+		data[i] = patstr[i];
 	}
 	lua_close(L);
 
-	set_field(LuaState, name, strlen(name), data, length);
+	set_field(LuaState, name, strlen(name), data, pat_length);
 
 	sodium_memzero(data, length);
 	free(data);

@@ -84,6 +84,18 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\tCreate/overwrite a field with a randomly generated piece of data.\n");
 			printf("\tThe field to write to is set by `--file`.\n");
 			printf("\tThe length of randomness to write to is set by `--length` (Defaulting to 20 bytes).\n");
+			printf("\tThe pattern to use for generation defaults to `:print:`, see `--pattern` for more options.\n");
+		} else
+
+		// --pattern | -p
+		if(strcmp(helpstring, "pattern") == 0) {
+			printf("--pattern $PATTERN\n");
+			printf("-p $PATTERN\n");
+			printf("\tSupply a character set, which may be expanded, usually for use with `--mode generate`.\n");
+			printf("\tPattern expansion occurs between two colons:\n");
+			printf("\te.g. :print: will expand to all printable characters.\n");
+			printf("\tUse :colon: to get a literal colon.\n");
+			// TODO: List all sets...
 		} else
 
 		// --file | -f
@@ -164,6 +176,7 @@ int main(int argc, char* argv[]) {
 	char* keyfilename = NULL;
 	char* datafilename = NULL;
 	char* argfile = NULL;
+	char* argpattern = NULL;
 	size_t arglength = 0;
 
 	lua_createtable(CLI_LUA, 0, 0);
@@ -322,6 +335,20 @@ int main(int argc, char* argv[]) {
 		lua_pop(CLI_LUA, -1);
 	}
 
+	// Check for pattern
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "pattern");
+	t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TSTRING) {
+		const char* tmp = lua_tostring(CLI_LUA, -1);
+		argpattern = strdup(tmp);
+		if(argpattern == NULL) {
+			// TODO: Safety
+		}
+	} else {
+		lua_pop(CLI_LUA, -1);
+	}
+
 	lua_close(CLI_LUA);
 
 	if(keyfilename == NULL) {
@@ -399,8 +426,7 @@ int main(int argc, char* argv[]) {
     		run_ls_mode(L);
     		break;
     	case GENERATE_MODE:
-    		// TODO: Allow setting pattern
-    		run_generate_mode(L, argfile, arglength, NULL);
+    		run_generate_mode(L, argfile, arglength, argpattern);
     		break;
     }
 
@@ -416,6 +442,9 @@ int main(int argc, char* argv[]) {
 	free(progname);
 	if(argfile != NULL) {
 		free(argfile);
+	}
+	if(argpattern != NULL) {
+		free(argpattern);
 	}
 	free(datadir);
 	lua_close(L);

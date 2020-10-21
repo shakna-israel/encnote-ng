@@ -14,6 +14,7 @@ local shorts = {
 	['-m'] = '--mode',
 	['-f'] = '--file',
 	['-l'] = '--length',
+	['-p'] = '--pattern',
 }
 
 local in_table = function(query, tbl)
