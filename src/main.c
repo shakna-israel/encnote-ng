@@ -166,6 +166,20 @@ enum MODES {
 	INVALID_MODE,
 };
 
+// TODO: view file
+// TODO: clipboard (X11 or SDL...)
+// TODO: copy to file
+// TODO: copy existing file
+// TODO: rename existing file
+// TODO: delete file
+// TODO: grep-like search file
+// TODO: find-like search for file
+// TODO: text editor
+// TODO: Lua-based user hooks
+// TODO: Lua-based user commands
+// TODO: arbitrary command
+// TODO: Example git-hooks...
+
 int main(int argc, char* argv[]) {
 	lua_State* CLI_LUA = luaL_newstate();	
 	luaL_openlibs(CLI_LUA);
