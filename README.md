@@ -32,7 +32,7 @@ This is not a state-of-the-art encryption tool, this is a "good enough" encrypti
 
 + `pkg-config`
 
-+ `xxd` (Only for the CLI tool).
++ `xxd`
 
 + [libsodium](http://libsodium.org/), including development headers.
 
@@ -48,7 +48,16 @@ To create the example CLI tool, simply run:
 
 ### Embedding
 
-To embed, you'll need both `src/encnote8.c` and `include/encnote8.h`. You can ignore the other files, they're used to create our CLI tool.
+To embed, you'll need:
+
+* `src/encnote8.c`
+
+* `include/encnote8.h`
+
+* `include/pattern.h` (generate by running `make pattern.h`)
+
+
+You can ignore the other files, they're used to create our CLI tool.
 
 You'll also need to link again Lua 5.3, and libsodium:
 

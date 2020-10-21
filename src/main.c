@@ -11,13 +11,13 @@ void run_ls_mode(lua_State* L) {
 	luaL_dostring(L, "for k, v in pairs(ENCNOTE_DATA) do print(#v, k) end");
 }
 
-void run_generate_mode(lua_State* L, const char* argfile, size_t length) {
+void run_generate_mode(lua_State* L, const char* argfile, size_t length, char* pattern) {
 	if(argfile == NULL) {
 		// TODO: Error...
 		return;
 	}
 	
-	if(generate(L, argfile, length) != true) {
+	if(generate(L, argfile, length, pattern) != true) {
 		fprintf(stderr, "ERROR: Generate failed.\n");
 	}
 }
@@ -399,7 +399,8 @@ int main(int argc, char* argv[]) {
     		run_ls_mode(L);
     		break;
     	case GENERATE_MODE:
-    		run_generate_mode(L, argfile, arglength);
+    		// TODO: Allow setting pattern
+    		run_generate_mode(L, argfile, arglength, NULL);
     		break;
     }
 

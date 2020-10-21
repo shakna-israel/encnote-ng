@@ -1,5 +1,7 @@
 #include <encnote8.h>
 
+#include <pattern.h>
+
 bool set_field(lua_State* LuaState, const char* key, size_t key_len, const char* value, size_t value_len) {
 	// Put our data onto the stack...
 	lua_getglobal(LuaState, "ENCNOTE_DATA");
@@ -246,17 +248,35 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	return true;
 }
 
-bool generate(lua_State* LuaState, const char* name, size_t length) {
-	const uint32_t upper = 255;
+bool generate(lua_State* LuaState, const char* name, size_t length, char* pattern) {
+	// Default pattern
+	if(pattern == NULL) {
+		pattern = ":print:";
+	}
+
+	// Expand the pattern...
+	lua_State* L = luaL_newstate();
+	luaL_openlibs(L);
+	luaL_dostring(L, src_pattern_lua);
+
+	lua_pushstring(L, pattern);
+	lua_setglobal(L, "pattern");
+
+	luaL_dostring(L, "expand_pattern(pattern)");
+
+	// Get the value and its length
+	size_t pat_length = 0;
+	const char* patstr = lua_tolstring(L, -1, &pat_length);
 
 	char* data = calloc(length, sizeof(char));
 	// TODO: Safety
 
 	for(size_t i = 0; i < length; i++) {
 		// TODO: Pattern of allowed bytes!
-		uint32_t c = randombytes_uniform(upper);
-		data[i] = c;
+		uint32_t c = randombytes_uniform(pat_length);
+		data[i] = patstr[c];
 	}
+	lua_close(L);
 
 	set_field(LuaState, name, strlen(name), data, length);
 

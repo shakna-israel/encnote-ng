@@ -41,7 +41,7 @@ struct Field dump_data(lua_State* LuaState);
 /*
 	Write `length` random bytes to field `name`.
 */
-bool generate(lua_State* LuaState, const char* name, size_t length);
+bool generate(lua_State* LuaState, const char* name, size_t length, char* pattern);
 
 /*
 	Initialise a Lua state from a given keyfile and datafile.
