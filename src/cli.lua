@@ -64,11 +64,6 @@ local argparse = function()
 			cli_args[current_flag] = true
 		end
 	end
-
-	-- Default values
-	if not arg['length'] then
-		arg['length'] = 20
-	end
 end
 
 argparse()

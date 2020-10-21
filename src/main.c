@@ -305,6 +305,9 @@ int main(int argc, char* argv[]) {
 	t = lua_type(CLI_LUA, -1);
 	if(t == LUA_TNUMBER) {
 		arglength = lua_tonumber(CLI_LUA, -1);
+	} else {
+		// Default argument
+		arglength = 20;
 	}
 
 	// Check for keyfile
