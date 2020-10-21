@@ -298,7 +298,7 @@ bool generate(lua_State* LuaState, const char* name, size_t length, char* patter
 
 	set_field(LuaState, name, strlen(name), data, pat_length);
 
-	sodium_memzero(data, length);
+	sodium_memzero(data, pat_length);
 	free(data);
 
 	return true;
