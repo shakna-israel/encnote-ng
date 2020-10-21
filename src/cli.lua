@@ -7,6 +7,7 @@ local optionless = {
 
 local shorts = {
 	['-h'] = '--help',
+	['-hh'] = '--helpinfo',
 	['-k'] = '--keyfile',
 	['-d'] = '--datafile',
 	['-D'] = '--datadir',

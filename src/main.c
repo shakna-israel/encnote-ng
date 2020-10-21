@@ -365,11 +365,28 @@ void run_help(const char* progname, const char* helpstring) {
 
 		run_help(progname, "help");
 		fputc('\n', stdout);
+
+		run_help(progname, "helpinfo");
+		fputc('\n', stdout);
 	} else {
 		// Specific usage
-		// TODO: mode
+		// --mode | -m
+		if(strcmp(helpstring, "mode") == 0) {
+			printf("--mode $MODE\n");
+			printf("-m $MODE\n");
+			printf("\tSet the mode to operate in.\n");
+			printf("\tValid Options:\n");
+			printf("\t+ ls\n");
+			printf("\t\t List the size and content of the repository.\n");
+			printf("\t+ generate\n");
+			printf("\t\t Create/overwrite a field with a randomly generated piece of data.\n");
+			printf("\t+ dump\n");
+			printf("\t\t Dump a Lua-compatible piece of code containing the entire repository to the console.\n");
+		}
+
 		// TODO: mode dump
 		// TODO: mode ls
+		// TODO: mode generate
 
 		// TODO: keyfile
 		// TODO: datafile
@@ -430,8 +447,23 @@ int main(int argc, char* argv[]) {
 	if(t == LUA_TBOOLEAN) {
 		lua_pop(CLI_LUA, -1);
 
-		printf("Usage: %s [options...]\n", progname);
-		// TODO: Options...
+		run_help(progname, NULL);
+
+		// Cleanup and close.
+		free(progname);
+		free(datadir);
+		lua_close(CLI_LUA);
+		return 0;
+	}
+
+	// Check if helpinfo called
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "helpinfo");
+	t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TSTRING) {
+		const char* helpinfo = lua_tostring(CLI_LUA, -1);
+
+		run_help(progname, helpinfo);
 
 		// Cleanup and close.
 		free(progname);
