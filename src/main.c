@@ -377,21 +377,96 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\tSet the mode to operate in.\n");
 			printf("\tValid Options:\n");
 			printf("\t+ ls\n");
-			printf("\t\t List the size and content of the repository.\n");
+			printf("\t\tList the size and content of the repository.\n");
+			printf("\t\tSee --helpinfo 'mode ls' for more.\n");
 			printf("\t+ generate\n");
-			printf("\t\t Create/overwrite a field with a randomly generated piece of data.\n");
+			printf("\t\tCreate/overwrite a field with a randomly generated piece of data.\n");
+			printf("\t\tSee --helpinfo 'mode generate' for more.\n");
 			printf("\t+ dump\n");
-			printf("\t\t Dump a Lua-compatible piece of code containing the entire repository to the console.\n");
+			printf("\t\tDump a Lua-compatible piece of code containing the entire repository to the console.\n");
+			printf("\t\tSee --helpinfo 'mode dump' for more.\n");
+		} else
+
+		// mode dump
+		if(strcmp(helpstring, "mode dump") == 0) {
+			printf("--mode dump\n");
+			printf("\tDump a Lua-compatible piece of code containing the entire repository to the console.\n");
+		} else
+
+		// mode ls
+		if(strcmp(helpstring, "mode ls") == 0) {
+			printf("--mode ls\n");
+			printf("\tList the size and content of the repository.\n");
+			printf("\tFormat:\n");
+			printf("\t$SIZE $FILENAME\n");
+		} else
+
+		// mode generate
+		if(strcmp(helpstring, "mode generate") == 0) {
+			printf("--mode generate\n");
+			printf("\tCreate/overwrite a field with a randomly generated piece of data.\n");
+			printf("\tThe field to write to is set by `--file`.\n");
+			printf("\tThe length of randomness to write to is set by `--length` (Defaulting to 20 bytes).\n");
+		} else
+
+		// --file | -f
+		if(strcmp(helpstring, "file") == 0) {
+			printf("--file $NAME\n");
+			printf("-f $NAME\n");
+			printf("\tSets a filename, generally used by various modes to operate on a particular field in the encrypted repository.\n");
+		} else
+		
+		// --length | -l
+		if(strcmp(helpstring, "length") == 0) {
+			printf("--length $NUM\n");
+			printf("-l $NUM\n");
+			printf("\tSet a length value, generally used by various modes.\n");
+		} else
+
+		// --keyfile | -k
+		if(strcmp(helpstring, "keyfile") == 0) {
+			printf("--keyfile $FILENAME\n");
+			printf("-k $FILENAME\n");
+			printf("\tSet the location of the keyfile to this path.\n");
+			printf("\tIf this option is not used, uses the file 'key' inside the path provided by --datadir\n");
+		} else
+
+		// --datafile | -d
+		if(strcmp(helpstring, "datafile") == 0) {
+			printf("--datafile $FILENAME\n");
+			printf("-d $FILENAME\n");
+			printf("\tSet the location of the datafile to this path.\n");
+			printf("\tIf this option is not used, uses the file 'data' inside the path provided by --datadir\n");
+		} else
+
+		// --datadir | -D
+		if(strcmp(helpstring, "datadir") == 0) {
+			printf("--datadir\n");
+			printf("-D\n");
+			printf("\tPrints the current data directory, if any, and then quits.\n");
+			printf("\tPath is looked up as follows:\n");
+			printf("\t+ $XDG_DATA_HOME/encnote8/\n");
+			printf("\t+ $HOME/.local/share/encnote8/\n");
+			printf("\tIf neither can be found, lookup fails, and the program will exit.\n");
+		} else
+
+		// --help | -h
+		if(strcmp(helpstring, "help") == 0) {
+			printf("--help\n");
+			printf("-h\n");
+			printf("\tPrints general help information, if any, and then quits.\n");
+		} else
+
+		// --helpinfo | -hh
+		if(strcmp(helpstring, "helpinfo") == 0) {
+			printf("--helpinfo $STRING\n");
+			printf("-hh $STRING\n");
+			printf("\tPrints specific help information, if any, and then quits.\n");
+		} else
+
+		{
+			printf("Unknown help option: <%s>\n", helpstring);
 		}
-
-		// TODO: mode dump
-		// TODO: mode ls
-		// TODO: mode generate
-
-		// TODO: keyfile
-		// TODO: datafile
-		// TODO: datadir
-		// TODO: help
 	}
 }
 
