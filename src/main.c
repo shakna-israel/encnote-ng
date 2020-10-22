@@ -689,7 +689,23 @@ int main(int argc, char* argv[]) {
 	init_data(L, keyfilename, datafilename);
 
 	// TODO: Expose our stuff...
+
+	// Expose a cryptographic random...
 	lua_register(L, "BetterRandom", LuaRandom);
+
+	// Expose a raw arg table...
+	lua_createtable(L, 0, 0);
+	lua_setglobal(L, "arg");
+	for(size_t i = 0; i < argc; i++) {
+		lua_getglobal(L, "arg");
+		lua_pushnumber(L, i);
+		lua_pushstring(L, argv[i]);
+
+		// Set the key/value in the table...
+		lua_settable(L, -3);
+	}
+
+	// TODO: Reconstruct a table of parsed args...
 
 	// Check what we want to do...
     switch(current_mode) {
