@@ -1,6 +1,13 @@
 #include <encnote8.h>
 #include <cli.h>
 
+#define _GNU_SOURCE
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include <errno.h>
+
 void run_dump_mode(lua_State* L) {
 	struct Field f = dump_data(L);
 	printf("%s\n", f.content);
@@ -31,6 +38,131 @@ void run_view_mode(lua_State* L, const char* argfile) {
 	} else {
 		fprintf(stderr, "%s\n", "No --file supplied.");
 	}
+}
+
+void run_edit_mode(lua_State* L, const char* argfile) {
+	if(argfile == NULL) {
+		return;
+	}
+
+	// TODO: Create an anonymous file...
+
+	// shm_open requires a file name...
+	char anon_name[15 + 1];
+	for(size_t i = 0; i < 15; i++) {
+		char c = 0;
+		while(c == 0 || c > 90 && c < 97) {
+			c = (char)('A' + randombytes_uniform('z') % ('z' - 'A' + 1));
+		}
+		anon_name[i] = c;
+	}
+	anon_name[0] = '/';
+	anon_name[1] = 't';
+	anon_name[2] = 'm';
+	anon_name[3] = 'p';
+	anon_name[4] = '.';
+    anon_name[15] = 0;
+
+    // Try and open our temporary file!
+	mode_t mode = 0600;
+	int fd = shm_open(anon_name, O_RDWR | O_CREAT | O_EXCL, mode);
+
+	// If we got an already existing file, find a new one...
+	while(fd < 0 && errno == EEXIST) {
+		for(size_t i = 0; i < 15; i++) {
+			char c = 0;
+			while(c == 0 || c > 90 && c < 97) {
+				c = (char)('A' + randombytes_uniform('z') % ('z' - 'A' + 1));
+			}
+			anon_name[i] = c;
+		}
+		anon_name[0] = '/';
+		anon_name[1] = 't';
+		anon_name[2] = 'm';
+		anon_name[3] = 'p';
+		anon_name[4] = '.';
+	    anon_name[15] = 0;
+
+		fd = shm_open(anon_name, O_RDWR | O_CREAT | O_EXCL, mode);
+	}
+
+	// TODO: Handle safety...
+	if(fd < 0) {
+		switch(errno) {
+			case EACCES:
+				printf("%s\n", "Permission denied.");
+				break;
+			case EEXIST:
+				printf("%s\n", "Already exists.");
+				break;
+			case EINVAL:
+				printf("%s\n", "Invalid name.");
+				break;
+			case EMFILE:
+				printf("%s\n", "Perprocess limit exceeded.");
+				break;
+			case ENAMETOOLONG:
+				printf("%s\n", "Name too long.");
+				break;
+			case ENFILE:
+				printf("%s\n", "System file limit reached.");
+				break;
+		}
+		exit(1);
+	}
+
+	FILE* f = fdopen(fd, "wb");
+
+	lua_pushstring(L, argfile);
+	lua_setglobal(L, "argfile");
+
+	luaL_dostring(L, "return ENCNOTE_DATA[argfile] or ''");
+
+	size_t length = 0;
+	const char* str = lua_tolstring(L, -1, &length);
+
+	size_t written = fwrite(str, sizeof(char), length, f);
+
+	luaL_dostring(L, "argfile=nil");
+
+	// Find the actual filepath!
+	int MAXSIZE = 0xFFF;
+    char proclnk[0xFFF];
+    char filename[0xFFF];
+    ssize_t r;
+
+    sprintf(proclnk, "/proc/self/fd/%d", fd);
+    r = readlink(proclnk, filename, MAXSIZE);
+    if(r < 0) {
+    	// TODO: Fail
+    }
+    filename[r] = '\0';
+
+    // Finish writing
+	fclose(f);
+
+	// TODO: Call $EDITOR on the anonymous file
+	// TODO: calloc this, using sprintf to get the size...
+	char com_buf[MAXSIZE];
+	for(size_t i = 0; i < MAXSIZE; i++) {
+		com_buf[i] = 0;
+	}
+	sprintf(com_buf, "nano %s", filename);
+	system(com_buf);
+
+	// TODO: Read file data back.
+	lua_pushstring(L, filename);
+	lua_setglobal(L, "filepath");
+	lua_pushstring(L, argfile);
+	lua_setglobal(L, "filename");
+
+	luaL_dostring(L, "f = io.open(filepath); if f ~= nil then ENCNOTE_DATA[filename] = f:read(\"*all\");f:close();end");
+	luaL_dostring(L, "filepath=nil;filename=nil");
+
+	// Delete the file
+	// TODO: 1000 round of overwriting with random bytes...
+	ftruncate(fd, 0);
+	shm_unlink(anon_name);
 }
 
 void run_help(const char* progname, const char* helpstring) {
@@ -218,6 +350,7 @@ enum MODES {
 	LS_MODE,
 	GENERATE_MODE,
 	VIEW_MODE,
+	EDIT_MODE,
 	INVALID_MODE,
 };
 
@@ -343,6 +476,9 @@ int main(int argc, char* argv[]) {
 		} else
 		if(strcmp(mode_string, "view") == 0) {
 			current_mode = VIEW_MODE;
+		} else
+		if(strcmp(mode_string, "edit") == 0) {
+			current_mode = EDIT_MODE;
 		} else
 		{
 			fprintf(stderr, "ERROR: %s\n", "Invalid or no mode set.");
@@ -508,6 +644,8 @@ int main(int argc, char* argv[]) {
     	case VIEW_MODE:
     		run_view_mode(L, argfile);
     		break;
+    	case EDIT_MODE:
+    		run_edit_mode(L, argfile);
     	default:
     		// TODO: invalid state. Somehow.
     		break;

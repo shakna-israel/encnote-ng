@@ -7,6 +7,8 @@ expand_pattern = function(pattern)
 		return string.gsub(expand_pattern(":print:"), ' ', '')
 	end)
 
+	-- TODO: :ascii:
+
 	-- :print: - all printable characters, including space
 	pattern = string.gsub(pattern, "%:print%:", ":alpha::space::xdigit::punct:")
 
