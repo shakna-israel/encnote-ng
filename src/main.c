@@ -45,7 +45,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 		return;
 	}
 
-	// TODO: Create an anonymous file...
+	// Create an anonymous file...
 
 	// shm_open requires a file name...
 	char anon_name[15 + 1];
@@ -111,6 +111,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 		exit(1);
 	}
 
+	// Write the data...
 	FILE* f = fdopen(fd, "wb");
 
 	lua_pushstring(L, argfile);
@@ -122,6 +123,9 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	const char* str = lua_tolstring(L, -1, &length);
 
 	size_t written = fwrite(str, sizeof(char), length, f);
+	if(written != length) {
+		// TODO: Incomplete data...
+	}
 
 	luaL_dostring(L, "argfile=nil");
 
@@ -141,16 +145,23 @@ void run_edit_mode(lua_State* L, const char* argfile) {
     // Finish writing
 	fclose(f);
 
-	// TODO: Call $EDITOR on the anonymous file
-	// TODO: calloc this, using sprintf to get the size...
-	char com_buf[MAXSIZE];
-	for(size_t i = 0; i < MAXSIZE; i++) {
-		com_buf[i] = 0;
-	}
-	sprintf(com_buf, "nano %s", filename);
-	system(com_buf);
+	// Call $EDITOR on the anonymous file
+	luaL_dostring(L, "return os.getenv(\"EDITOR\") or 'nano -R'");
+	const char* editor = lua_tostring(L, -1);
 
-	// TODO: Read file data back.
+	size_t com_bytes = snprintf(NULL, 0, "%s %s", editor, filename);
+	char* com_buf = calloc(com_bytes + 2, sizeof(char));
+	if(com_buf == NULL) {
+		// TODO: Safety
+	}
+	snprintf(com_buf, com_bytes + 1, "%s %s", editor, filename);
+	// TODO: Check the right number wrote...
+
+	system(com_buf);
+	sodium_memzero(com_buf, com_bytes + 1);
+	free(com_buf);
+
+	// Read file data back.
 	lua_pushstring(L, filename);
 	lua_setglobal(L, "filepath");
 	lua_pushstring(L, argfile);
@@ -159,9 +170,38 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	luaL_dostring(L, "f = io.open(filepath); if f ~= nil then ENCNOTE_DATA[filename] = f:read(\"*all\");f:close();end");
 	luaL_dostring(L, "filepath=nil;filename=nil");
 
-	// Delete the file
-	// TODO: 1000 round of overwriting with random bytes...
-	ftruncate(fd, 0);
+	// Delete the file securely
+
+	f = fopen(filename, "rb");
+	if(f == NULL) {
+		// The file has disappeared!
+		return;
+	}
+	// 0 the file out...
+	fseek(f, 0L, SEEK_END);
+	size_t flen = ftell(f);
+	fclose(f);
+	truncate(filename, 0);
+	truncate(filename, flen);
+
+	// 150 rounds of overwriting with random bytes...
+	f = fopen(filename, "wb");
+	if(f == NULL) {
+		// The file has disappeared!
+		return;
+	}
+
+	for(size_t i = 0; i < 150; i++) {
+		fseek(f, 0L, SEEK_SET);
+		for(size_t ix = 0; ix < flen; ix++) {
+			fputc(randombytes_uniform(255), f);
+		}
+		fflush(f);
+	}
+	fclose(f);
+
+	// Truncate and kill
+	truncate(filename, 0);
 	shm_unlink(anon_name);
 }
 
