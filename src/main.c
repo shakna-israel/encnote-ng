@@ -411,9 +411,17 @@ enum MODES {
 // TODO: delete file
 // TODO: grep-like search file
 // TODO: find-like search for file
-// TODO: text editor
-// TODO: Lua-based user hooks
+
 // TODO: Lua-based user commands
+// - Need to expose our run commands as an API...
+// - And expose BetterRandom...
+
+// TODO: Lua-based user hooks
+// - Needs access to Lua-based user commands
+// - pre-command
+// - post-command
+// - pre-encrypt
+
 // TODO: arbitrary command
 // TODO: Example git-hooks...
 
@@ -679,6 +687,9 @@ int main(int argc, char* argv[]) {
     // Initialise...
     lua_State* L = luaL_newstate();
 	init_data(L, keyfilename, datafilename);
+
+	// TODO: Expose our stuff...
+	lua_register(L, "BetterRandom", LuaRandom);
 
 	// Check what we want to do...
     switch(current_mode) {
