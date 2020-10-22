@@ -286,7 +286,7 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("--mode generate\n");
 			printf("\tCreate/overwrite a field with a randomly generated piece of data.\n");
 			printf("\tThe field to write to is set by `--file`.\n");
-			printf("\tThe length of randomness to write to is set by `--length` (Defaulting to 20 bytes).\n");
+			printf("\tThe length of randomness to write to is set by `--length` (Defaulting to 20 characters).\n");
 			printf("\tThe pattern to use for generation defaults to `:print:`, see `--pattern` for more options.\n");
 		} else
 
