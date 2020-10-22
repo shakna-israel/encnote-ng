@@ -116,7 +116,40 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\tPattern expansion occurs between two colons:\n");
 			printf("\te.g. :print: will expand to all printable characters.\n");
 			printf("\tUse :colon: to get a literal colon.\n");
-			// TODO: List all sets...
+
+			printf("\tDefined patterns include:\n");
+			printf("\t\t+ :graph:\n");
+			printf("\t\t\tAll normal printable characters, excluding space.\n");
+			printf("\t\t+ :print:\n");
+			printf("\t\t\tAll normal printable characters.\n");
+			printf("\t\t+ :alnum:\n");
+			printf("\t\t\tAll Latin alphabet characters and Arabic numbers.\n");
+			printf("\t\t+ :alpha:\n");
+			printf("\t\t\tAll Latin alphabet characters.\n");
+			printf("\t\t+ :space:\n");
+			printf("\t\t\tAll horizontal and vertical whitespace.\n");
+			printf("\t\t+ :blank:\n");
+			printf("\t\t\tAll horizontal whitespace.\n");
+			printf("\t\t+ :cntrl:\n");
+			printf("\t\t\tControl sequences.\n");
+			printf("\t\t+ :xdigit:\n");
+			printf("\t\t\tAll hexadecimal characters.\n");
+			printf("\t\t+ :digit:\n");
+			printf("\t\t\tAll Arabic numbers.\n");
+			printf("\t\t+ :lower:\n");
+			printf("\t\t\tAll lowercase Latin alphabet characters.\n");
+			printf("\t\t+ :upper:\n");
+			printf("\t\t\tAll uppercase Latin alphabet characters.\n");
+			printf("\t\t+ :punct:\n");
+			printf("\t\t\tAll punctuation characters.\n");
+			printf("\t\t+ :greek:\n");
+			printf("\t\t\tAll Greek alphabet characters.\n");
+			printf("\t\t+ :greekupper:\n");
+			printf("\t\t\tAll Greek uppercase alphabet characters.\n");
+			printf("\t\t+ :greeklower:\n");
+			printf("\t\t\tAll Greek lowercase alphabet characters.\n");
+
+			// TODO: List all punctuation sets...
 		} else
 
 		// --file | -f
@@ -188,7 +221,6 @@ enum MODES {
 	INVALID_MODE,
 };
 
-// TODO: view file
 // TODO: clipboard (X11 or SDL...)
 // TODO: copy to file
 // TODO: copy existing file
