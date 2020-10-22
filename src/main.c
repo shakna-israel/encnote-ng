@@ -22,6 +22,17 @@ void run_generate_mode(lua_State* L, const char* argfile, size_t length, char* p
 	}
 }
 
+void run_view_mode(lua_State* L, const char* argfile) {
+	if(argfile != NULL) {
+		lua_pushstring(L, argfile);
+		lua_setglobal(L, "argfile");
+
+		luaL_dostring(L, "print(ENCNOTE_DATA[argfile]); argfile=nil;");
+	} else {
+		fprintf(stderr, "%s\n", "No --file supplied.");
+	}
+}
+
 void run_help(const char* progname, const char* helpstring) {
 	if(helpstring == NULL) {
 		// General usage
@@ -53,6 +64,9 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("-m $MODE\n");
 			printf("\tSet the mode to operate in.\n");
 			printf("\tValid Options:\n");
+			printf("\t+ view\n");
+			printf("\t\tPrint the contents of a file in the repository.\n");
+			printf("\t\tSee --helpinfo 'mode view' for more.\n");
 			printf("\t+ ls\n");
 			printf("\t\tList the size and content of the repository.\n");
 			printf("\t\tSee --helpinfo 'mode ls' for more.\n");
@@ -62,6 +76,13 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\t+ dump\n");
 			printf("\t\tDump a Lua-compatible piece of code containing the entire repository to the console.\n");
 			printf("\t\tSee --helpinfo 'mode dump' for more.\n");
+		} else
+
+		// mode view
+		if(strcmp(helpstring, "mode view") == 0) {
+			printf("\t+ view\n");
+			printf("\t\tPrint the contents of a file in the repository to the standard output device.\n");
+			printf("\tThe field to read to is set by `--file`.\n");
 		} else
 
 		// mode dump
@@ -163,6 +184,7 @@ enum MODES {
 	DUMP_MODE,
 	LS_MODE,
 	GENERATE_MODE,
+	VIEW_MODE,
 	INVALID_MODE,
 };
 
@@ -286,8 +308,13 @@ int main(int argc, char* argv[]) {
 		} else
 		if(strcmp(mode_string, "generate") == 0) {
 			current_mode = GENERATE_MODE;
-		} else {
+		} else
+		if(strcmp(mode_string, "view") == 0) {
+			current_mode = VIEW_MODE;
+		} else
+		{
 			fprintf(stderr, "ERROR: %s\n", "Invalid or no mode set.");
+			run_help(progname, "mode");
 			free(datadir);
 			free(progname);
 			lua_close(CLI_LUA);
@@ -295,6 +322,7 @@ int main(int argc, char* argv[]) {
 		}
 	} else {
 		fprintf(stderr, "ERROR: %s\n", "Invalid or no mode set.");
+		run_help(progname, "mode");
 		free(datadir);
 		free(progname);
 		lua_close(CLI_LUA);
@@ -444,6 +472,12 @@ int main(int argc, char* argv[]) {
     		break;
     	case GENERATE_MODE:
     		run_generate_mode(L, argfile, arglength, argpattern);
+    		break;
+    	case VIEW_MODE:
+    		run_view_mode(L, argfile);
+    		break;
+    	default:
+    		// TODO: invalid state. Somehow.
     		break;
     }
 
