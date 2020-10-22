@@ -27,7 +27,7 @@ void run_view_mode(lua_State* L, const char* argfile) {
 		lua_pushstring(L, argfile);
 		lua_setglobal(L, "argfile");
 
-		luaL_dostring(L, "print(ENCNOTE_DATA[argfile]); argfile=nil;");
+		luaL_dostring(L, "print(ENCNOTE_DATA[argfile] or ''); argfile=nil;");
 	} else {
 		fprintf(stderr, "%s\n", "No --file supplied.");
 	}

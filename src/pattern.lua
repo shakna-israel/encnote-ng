@@ -1,4 +1,6 @@
 expand_pattern = function(pattern)
+	-- NOTE: Order matters. Higher patterns usually expand to lower patterns.
+	-- There is no loop to ensure everything expands.
 
 	-- :graph: - all printable characters, not including space
 	pattern = string.gsub(pattern, "%:graph%:", function(m)
