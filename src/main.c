@@ -242,6 +242,8 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\t+ ls\n");
 			printf("\t\tList the size and content of the repository.\n");
 			printf("\t\tSee --helpinfo 'mode ls' for more.\n");
+			printf("\t+ edit\n");
+			printf("\t\tEdit a file in $EDITOR.\n");
 			printf("\t+ generate\n");
 			printf("\t\tCreate/overwrite a field with a randomly generated piece of data.\n");
 			printf("\t\tSee --helpinfo 'mode generate' for more.\n");
@@ -250,10 +252,18 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\t\tSee --helpinfo 'mode dump' for more.\n");
 		} else
 
+		// mode edit
+		if(strcmp(helpstring, "mode edit") == 0) {
+			printf("--mode edit\n");
+			printf("\tEdit a file in $EDITOR.\n");
+			printf("\tThe field to read/write to is set by `--file`.\n");
+			printf("\tIf $EDTIOR is not set, nano will be called in restricted mode.\n");
+		} else
+
 		// mode view
 		if(strcmp(helpstring, "mode view") == 0) {
-			printf("\t+ view\n");
-			printf("\t\tPrint the contents of a file in the repository to the standard output device.\n");
+			printf("--mode view\n");
+			printf("\tPrint the contents of a file in the repository to the standard output device.\n");
 			printf("\tThe field to read to is set by `--file`.\n");
 		} else
 
