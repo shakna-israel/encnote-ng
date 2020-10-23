@@ -90,7 +90,7 @@ bool encrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	unsigned char* ciphertext = calloc(CIPHERTEXT_LEN, sizeof(unsigned char));
 	if(ciphertext == NULL) {
 		// Safety
-		fprintf(stderr, "%s\n", "ERROR: Memory allocation error when creating ciphertext buffer.\n");
+		fprintf(stderr, "%s\n", "ERROR: Memory allocation error when creating ciphertext buffer.");
 		return false;
 	}
 
@@ -184,7 +184,7 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	// Check is string
 	int t = lua_type(L, -1);
 	if(t =! LUA_TSTRING) {
-		fprintf(stderr, "%s\n", "ERROR: Malformed keyfile.\n");
+		fprintf(stderr, "%s\n", "ERROR: Malformed keyfile.");
 		return false;
 	}
 
@@ -202,7 +202,7 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	// Check is string
 	t = lua_type(L, -1);
 	if(t =! LUA_TSTRING) {
-		fprintf(stderr, "%s\n", "ERROR: Malformed keyfile.\n");
+		fprintf(stderr, "%s\n", "ERROR: Malformed keyfile.");
 		return false;
 	}
 
@@ -223,7 +223,7 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	unsigned char* ciphertext = calloc(data_length + 1, sizeof(unsigned char));
 	// Safety
 	if(ciphertext == NULL) {
-		fprintf(stderr, "%s\n", "ERROR: Memory allocation error when creating ciphertext buffer.\n");
+		fprintf(stderr, "%s\n", "ERROR: Memory allocation error when creating ciphertext buffer.");
 		return false;
 	}
 
@@ -244,13 +244,13 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	unsigned char* decrypted = calloc(MESSAGE_LEN + 1, sizeof(unsigned char));
 	// Safety
 	if(decrypted == NULL) {
-		fprintf(stderr, "%s\n", "ERROR: Memory allocation error when creating decrypted buffer.\n");
+		fprintf(stderr, "%s\n", "ERROR: Memory allocation error when creating decrypted buffer.");
 		return false;
 	}
 
 	if (crypto_secretbox_open_easy(decrypted, ciphertext, data_length, nonce, key_data) != 0) {
 		// Message forged!
-		fprintf(stderr, "%s\n", "ERROR: Message forged.\n");
+		fprintf(stderr, "%s\n", "ERROR: Message forged.");
 		lua_close(L);
 		sodium_memzero(ciphertext, data_length + 1);
 		sodium_memzero(decrypted, MESSAGE_LEN + 1);
@@ -263,7 +263,7 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	// Load data
 	if(luaL_dostring(LuaState, decrypted)) {
 		// Check for errors...
-		fprintf(stderr, "%s\n", "ERROR: Malformed data after decryption.\n");
+		fprintf(stderr, "%s\n", "ERROR: Malformed data after decryption.");
 
 		sodium_memzero(ciphertext, data_length + 1);
 		sodium_memzero(decrypted, MESSAGE_LEN + 1);
