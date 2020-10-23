@@ -292,6 +292,7 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 }
 
 int LuaRandom(lua_State* L) {
+	// TODO: Type check...
 	int upper_bound = lua_tointeger(L, 1);
 
 	uint32_t result = randombytes_uniform(upper_bound);

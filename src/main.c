@@ -466,7 +466,8 @@ void run_help(const char* progname, const char* helpstring) {
 
 			printf("BetterRandom(upper-bound)\n");
 			printf("A function that hooks into our cryptographic library to supply a better random number generator.\n");
-			printf("\tReturns: A cryptographically safe random number.\n");
+			printf("`upper-bound` should be an integer.\n");
+			printf("\tReturns: A cryptographically safe random integer.\n");
 			fputc('\n', stdout);
 
 			printf("Dump()\n");
@@ -474,7 +475,7 @@ void run_help(const char* progname, const char* helpstring) {
 			fputc('\n', stdout);
 
 			printf("Generate(pattern, length)\n");
-			printf("A function that returns a cryptographically random string using the given pattern and length.\n");
+			printf("A function that returns a cryptographically random string using the given pattern (string) and length (integer).\n");
 			pritnf("See also: `--pattern`\n");
 			fputc('\n', stdout);
 		} else
