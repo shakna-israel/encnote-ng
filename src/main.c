@@ -23,6 +23,17 @@ void run_ls_mode(lua_State* L) {
 	luaL_dostring(L, "for k, v in pairs(ENCNOTE_DATA) do print(#v, k) end");
 }
 
+void run_delete_mode(lua_State* L, const char* filename) {
+	if(filename == NULL) {
+		fprintf(stderr, "%s\n", "ERROR: Delete failed. No `--file` given.");
+		return;
+	}
+	lua_pushstring(L, filename);
+	lua_setglobal(L, "filename");
+
+	luaL_dostring(L, "ENCNOTE_DATA[filename] = nil; filename=nil;");
+}
+
 void run_copy_mode(lua_State* L, const char* filename, const char* destination) {
 	if(filename == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: Copy failed. No `--file` given.");
@@ -319,6 +330,9 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\t+ edit\n");
 			printf("\t\tEdit a file in $EDITOR.\n");
 			printf("\t\tSee --helpinfo 'mode edit' for more.\n");
+			printf("\t+ delete\n");
+			printf("\t\tDelete a file.\n");
+			printf("\t\tSee --helpinfo 'mode delete' for more.\n");
 			printf("\t+ copy\n");
 			printf("\t\tCopy a given file to a given destination.\n");
 			printf("\t\tSee --helpinfo 'mode copy' for more.\n");
@@ -336,6 +350,13 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\tEdit a file in $EDITOR.\n");
 			printf("\tThe field to read/write to is set by `--file`.\n");
 			printf("\tIf $EDTIOR is not set, nano will be called in restricted mode.\n");
+		} else
+
+		// mode delete
+		if(strcmp(helpstring, "mode delete") == 0) {
+			printf("--mode delete\n");
+			printf("\tDelete a file.\n");
+			printf("\tThe field to remove is set by `--file`.\n");
 		} else
 
 		// mode copy
@@ -578,13 +599,13 @@ enum MODES {
 	VIEW_MODE,
 	EDIT_MODE,
 	COPY_MODE,
+	DELETE_MODE,
 	INVALID_MODE,
 };
 
 // TODO: clipboard (X11 or SDL...)
 // TODO: copy existing file
 // TODO: rename existing file
-// TODO: delete file
 // TODO: grep-like search file
 // TODO: find-like search for file
 
@@ -716,6 +737,9 @@ int main(int argc, char* argv[]) {
 		} else
 		if(strcmp(mode_string, "copy") == 0) {
 			current_mode = COPY_MODE;
+		} else
+		if(strcmp(mode_string, "delete") == 0) {
+			current_mode = DELETE_MODE;
 		} else
 		{
 			fprintf(stderr, "ERROR: %s\n", "Invalid or no mode set.");
@@ -1004,6 +1028,9 @@ int main(int argc, char* argv[]) {
 		case COPY_MODE:
 			lua_pushstring(L, "copy");
 			break;
+		case DELETE_MODE:
+			lua_pushstring(L, "delete");
+			break;
 		default:
 			// Unknown mode... Push false.
 			lua_pushboolean(L, 0);
@@ -1039,6 +1066,9 @@ int main(int argc, char* argv[]) {
     		break;
     	case COPY_MODE:
     		run_copy_mode(L, argfile, destination);
+    		break;
+    	case DELETE_MODE:
+    		run_delete_mode(L, argfile);
     		break;
     	default:
     		// invalid state. Somehow.
