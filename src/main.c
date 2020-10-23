@@ -23,6 +23,48 @@ void run_ls_mode(lua_State* L) {
 	luaL_dostring(L, "for k, v in pairs(ENCNOTE_DATA) do print(#v, k) end");
 }
 
+void run_copy_mode(lua_State* L, const char* filename, const char* destination) {
+	if(filename == NULL) {
+		fprintf(stderr, "%s\n", "ERROR: Copy failed. No `--file` given.");
+		return;
+	}
+	if(destination == NULL) {
+		fprintf(stderr, "%s\n", "ERROR: Copy failed. No `--destination` given.");
+		return;
+	}
+
+	// Read the file...
+	lua_pushstring(L, filename);
+	lua_setglobal(L, "filename");
+
+	luaL_dostring(L, "local f = io.open(filename);"
+	"if f ~= nil then"
+	"	local x = f:read(\"*all\");"
+	"	f:close();"
+	"	return x;"
+	"else"
+	"	return false;"
+	"end");
+
+	int t = lua_type(L, -1);
+	if(t != LUA_TSTRING) {
+		// Fail to open file...
+	} else {
+		// Get the value and its length
+		size_t file_length = 0;
+		const char* file_str = lua_tolstring(L, -1, &file_length);
+
+		// Set the file to the destination...
+		lua_getglobal(L, "ENCNOTE_DATA");
+		lua_pushstring(L, destination);
+		lua_pushlstring(L, file_str, file_length);
+		lua_settable(L, -3);
+	}
+
+	// Remove our temporary var...
+	luaL_dostring(L, "filename=nil;");
+}
+
 void run_generate_mode(lua_State* L, const char* argfile, size_t length, char* pattern) {
 	if(argfile == NULL) {
 		// Error...
@@ -276,6 +318,10 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\t\tSee --helpinfo 'mode ls' for more.\n");
 			printf("\t+ edit\n");
 			printf("\t\tEdit a file in $EDITOR.\n");
+			printf("\t\tSee --helpinfo 'mode edit' for more.\n");
+			printf("\t+ copy\n");
+			printf("\t\tCopy a given file to a given destination.\n");
+			printf("\t\tSee --helpinfo 'mode copy' for more.\n");
 			printf("\t+ generate\n");
 			printf("\t\tCreate/overwrite a field with a randomly generated piece of data.\n");
 			printf("\t\tSee --helpinfo 'mode generate' for more.\n");
@@ -290,6 +336,14 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\tEdit a file in $EDITOR.\n");
 			printf("\tThe field to read/write to is set by `--file`.\n");
 			printf("\tIf $EDTIOR is not set, nano will be called in restricted mode.\n");
+		} else
+
+		// mode copy
+		if(strcmp(helpstring, "mode copy") == 0) {
+			printf("--mode edit\n");
+			printf("\tCopy a given file to a given destination.\n");
+			printf("\tThe field to write to is set by `--destination`.\n");
+			printf("\tThe file to read from disk is set by `--file`.\n");
 		} else
 
 		// mode view
@@ -523,11 +577,11 @@ enum MODES {
 	GENERATE_MODE,
 	VIEW_MODE,
 	EDIT_MODE,
+	COPY_MODE,
 	INVALID_MODE,
 };
 
 // TODO: clipboard (X11 or SDL...)
-// TODO: copy to file
 // TODO: copy existing file
 // TODO: rename existing file
 // TODO: delete file
@@ -558,6 +612,7 @@ int main(int argc, char* argv[]) {
 	char* datafilename = NULL;
 	char* argfile = NULL;
 	char* argpattern = NULL;
+	char* destination = NULL;
 	size_t arglength = 0;
 
 	lua_createtable(CLI_LUA, 0, 0);
@@ -629,7 +684,7 @@ int main(int argc, char* argv[]) {
 			free(datadir);
 			free(progname);
 		} else {
-			fprintf(stderr, "%s\n", "NOT DATADIR FOUND!");
+			fprintf(stderr, "%s\n", "NO DATADIR FOUND!");
 		}
 
 		// Cleanup and close.
@@ -659,6 +714,9 @@ int main(int argc, char* argv[]) {
 		if(strcmp(mode_string, "edit") == 0) {
 			current_mode = EDIT_MODE;
 		} else
+		if(strcmp(mode_string, "copy") == 0) {
+			current_mode = COPY_MODE;
+		} else
 		{
 			fprintf(stderr, "ERROR: %s\n", "Invalid or no mode set.");
 			run_help(progname, "mode");
@@ -685,7 +743,21 @@ int main(int argc, char* argv[]) {
 		argfile = strdup(arg_file_tmp);
 		if(argfile == NULL) {
 			// Safety
-			fprintf(stderr, "%s\n", "ERROR: Memory allocation error when assigning `--file`.\n");
+			fprintf(stderr, "%s\n", "ERROR: Memory allocation error when assigning `--file`.");
+			exit(1);
+		}
+	}
+
+	// Check for destination
+	lua_getglobal(CLI_LUA, "cli_args");
+	lua_getfield(CLI_LUA, -1, "destination");
+	t = lua_type(CLI_LUA, -1);
+	if(t == LUA_TSTRING) {
+		const char* destination_tmp = lua_tostring(CLI_LUA, -1);
+		destination = strdup(destination_tmp);
+		if(destination == NULL) {
+			// Safety
+			fprintf(stderr, "%s\n", "ERROR: Memory allocation error when assigning `--destination`.");
 			exit(1);
 		}
 	}
@@ -896,6 +968,14 @@ int main(int argc, char* argv[]) {
 		lua_settable(L, -3);
 	}
 
+	// Set the destination if we have one
+	if(destination != NULL) {
+		lua_getglobal(L, "vararg");
+		lua_pushstring(L, "destination");
+		lua_pushstring(L, destination);
+		lua_settable(L, -3);
+	}
+
 	// Set the length
 	lua_getglobal(L, "vararg");
 	lua_pushstring(L, "length");
@@ -920,6 +1000,9 @@ int main(int argc, char* argv[]) {
 			break;
 		case EDIT_MODE:
 			lua_pushstring(L, "edit");
+			break;
+		case COPY_MODE:
+			lua_pushstring(L, "copy");
 			break;
 		default:
 			// Unknown mode... Push false.
@@ -953,6 +1036,9 @@ int main(int argc, char* argv[]) {
     		break;
     	case EDIT_MODE:
     		run_edit_mode(L, argfile);
+    		break;
+    	case COPY_MODE:
+    		run_copy_mode(L, argfile, destination);
     		break;
     	default:
     		// invalid state. Somehow.
