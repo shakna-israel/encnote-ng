@@ -110,6 +110,31 @@ There are several other methods found in `include/encnote8.h` that you can make 
 
 ---
 
+## Hooks
+
+Lua-based scripts called 'hooks' can be created for use with the CLI tool.
+
+These hooks have available a number of functions to make them practical.
+
+As a demonstration of what you might use a hook for, consider this post-command hook:
+
+    local t = os.time()
+
+    local key = string.format("%sbackup_%s.key", vararg['datadir'], t)
+    local data = string.format("%sbackup_%s.data", vararg['datadir'], t)
+
+    if vararg['mode'] ~= 'view' and vararg['mode'] ~= 'ls' and vararg['mode'] ~= 'dump' then
+	    if not Encrypt(key, data) then
+		    print("Failed to write backup...")
+    	end
+    end
+
+Every time a command is run that is not one of `view`, `ls` and `dump`, once the command has completed, a copy of the database and its keys are saved to our data directory.
+
+You would write this file somewhere like: `"$(./encnote8 --datadir)"hooks/post.lua`.
+
+---
+
 # License
 
 See the `LICENSE.md` file for the legal text, and remember that you're also linking against Lua and libsodium, and their licenses.
