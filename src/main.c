@@ -483,6 +483,11 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("Overwrites the ENCNOTE_DATA table if successful.\n");
 			printf("Returns a boolean.\n");
 			fputc('\n', stdout);
+
+			printf("Encrypt(key-filename, data-filename)\n");
+			printf("Overwrites the two given files and encrypts the current data, if successful.\n");
+			printf("Returns a boolean.\n");
+			fputc('\n', stdout);
 		} else
 
 		{
@@ -800,6 +805,7 @@ int main(int argc, char* argv[]) {
 	lua_register(L, "Dump", LuaDump);
 	lua_register(L, "Generate", LuaGenerateString);
 	lua_register(L, "Decrypt", LuaDecrypt);
+	lua_register(L, "Encrypt", LuaEncrypt);
 
 	// Expose a raw arg table...
 	lua_createtable(L, 0, 0);

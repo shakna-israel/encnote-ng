@@ -72,9 +72,12 @@ char* get_data_dir();
 
 
 // You probably don't want to touch these...
+// They wrap some of our function into register-able Lua functions.
+// See main.c for usage if you really want to, but they won't remain stable.
 int LuaRandom(lua_State* L);
 int LuaDump(lua_State* L);
 int LuaGenerateString(lua_State* L);
 int LuaDecrypt(lua_State* L);
+int LuaEncrypt(lua_State* L);
 
 #endif
