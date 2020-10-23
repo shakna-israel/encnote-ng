@@ -44,7 +44,10 @@ All of these should be in your package manager.
 
 To create the example CLI tool, simply run:
 
+	make clean
 	make
+
+The `make clean` step may have some ignored errors. They are ignored, because they can be safely ignored.
 
 ### Embedding
 
