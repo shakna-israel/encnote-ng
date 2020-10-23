@@ -226,6 +226,9 @@ void run_help(const char* progname, const char* helpstring) {
 		run_help(progname, "datadir");
 		fputc('\n', stdout);
 
+		run_help(progname, "hooks");
+		fputc('\n', stdout);
+
 		run_help(progname, "help");
 		fputc('\n', stdout);
 
@@ -390,6 +393,41 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("--helpinfo $STRING\n");
 			printf("-hh $STRING\n");
 			printf("\tPrints specific help information, if any, and then quits.\n");
+		} else
+
+		// Hook general info...
+		if(strcmp(helpstring, "hooks") == 0) {
+			printf("Hooks\n");
+			printf("There is support for user-written hooks for manipulating the data.\n");
+			printf("A hook is a Lua script that will be run at a particular time.\n");
+			printf("For the following examples, assume that $DATADIR is equal to what is given by `--datadir`.\n");
+			fputc('\n', stdout);
+			printf("+ If a file is located at `$DATADIR/hooks/pre.lua` then it will be called before running the current command.\n");
+			printf("+ If a file is located at `$DATADIR/hooks/post.lua` then it will be called after running the current command.\n");
+			printf("+ If a file is located at `$DATADIR/hooks/preencrypt.lua` then it will be called before running the final re-encryption event.\n");
+			fputc('\n', stdout);
+			printf("INFO: Modifying the data provided, apart from the ENCNOTE_DATA table, will have no effect on the running program. (i.e. Changing the mode will do nothing.)\n");
+			printf("This may change in a future version.\n");
+			fputc('\n', stdout);
+			printf("Available Data:\n");
+			printf("All hooks have these available to them:\n");
+			fputc('\n', stdout);
+			printf("The Lua standard libraries.\n");
+			fputc('\n', stdout);
+			printf("ENCNOTE_DATA\n");
+			printf("\tA table of our unencrypted data, where the keys are strings of the file names and the values are strings of the content.\n");
+			printf("\tWARNING: If you change the type from string for either key or value, you will corrupt your repository.\n");
+			fputc('\n', stdout);
+			printf("args\n");
+			printf("\tA sequence-like table of the raw arguments given to the program.\n");
+			fputc('\n', stdout);
+			printf("varargs\n");
+			printf("\tA key-value table of parsed information from the command line arguments, and other things such as the data directory.\n");
+			fputc('\n', stdout);
+			printf("BetterRandom(upper-bound)\n");
+			printf("A function that hooks into our cryptographic library to supply a better random number generator.\n");
+			printf("\tReturns: A cryptographically safe random number.\n");
+			fputc('\n', stdout);
 		} else
 
 		{

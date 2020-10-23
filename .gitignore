@@ -1,2 +1,5 @@
 include/cli.h
 include/pattern.h
+include/postcommand.h
+include/precommand.h
+include/preencrypthook.h
