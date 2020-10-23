@@ -53,6 +53,27 @@ void run_clone_mode(lua_State* L, const char* filename, const char* destination)
 	luaL_dostring(L, "ENCNOTE_DATA[destination] = ENCNOTE_DATA[filename]; destination=nil; filename=nil;");
 }
 
+void run_rename_mode(lua_State* L, const char* filename, const char* destination) {
+	if(filename == NULL) {
+		fprintf(stderr, "%s\n", "ERROR: Rename failed. No `--file` given.");
+		return;
+	}
+	if(destination == NULL) {
+		fprintf(stderr, "%s\n", "ERROR: Rename failed. No `--destination` given.");
+		return;
+	}
+
+	lua_pushstring(L, filename);
+	lua_setglobal(L, "filename");
+
+	lua_pushstring(L, destination);
+	lua_setglobal(L, "destination");
+
+	luaL_dostring(L, "ENCNOTE_DATA[destination] = ENCNOTE_DATA[filename];");
+	luaL_dostring(L, "ENCNOTE_DATA[filename] = nil;");
+	luaL_dostring(L, "filename=nil;destination=nil;");
+}
+
 void run_copy_mode(lua_State* L, const char* filename, const char* destination) {
 	if(filename == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: Copy failed. No `--file` given.");
@@ -340,27 +361,39 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("-m $MODE\n");
 			printf("\tSet the mode to operate in.\n");
 			printf("\tValid Options:\n");
+			
 			printf("\t+ view\n");
 			printf("\t\tPrint the contents of a file in the repository.\n");
 			printf("\t\tSee --helpinfo 'mode view' for more.\n");
+			
 			printf("\t+ ls\n");
 			printf("\t\tList the size and content of the repository.\n");
 			printf("\t\tSee --helpinfo 'mode ls' for more.\n");
+			
 			printf("\t+ edit\n");
 			printf("\t\tEdit a file in $EDITOR.\n");
 			printf("\t\tSee --helpinfo 'mode edit' for more.\n");
+			
 			printf("\t+ delete\n");
 			printf("\t\tDelete a file.\n");
 			printf("\t\tSee --helpinfo 'mode delete' for more.\n");
+			
 			printf("\t+ copy\n");
 			printf("\t\tCopy a given file to a given destination.\n");
 			printf("\t\tSee --helpinfo 'mode copy' for more.\n");
+			
 			printf("\t+ clone\n");
 			printf("\t\tCopy a repo file to a given destination.\n");
 			printf("\t\tSee --helpinfo 'mode clone' for more.\n");
+
+			printf("\t+ rename\n");
+			printf("\t\tRename an existing file..\n");
+			printf("\t\tSee --helpinfo 'mode rename' for more.\n");
+
 			printf("\t+ generate\n");
 			printf("\t\tCreate/overwrite a field with a randomly generated piece of data.\n");
 			printf("\t\tSee --helpinfo 'mode generate' for more.\n");
+			
 			printf("\t+ dump\n");
 			printf("\t\tDump a Lua-compatible piece of code containing the entire repository to the console.\n");
 			printf("\t\tSee --helpinfo 'mode dump' for more.\n");
@@ -387,6 +420,14 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\tCopy a given file to a given destination.\n");
 			printf("\tThe field to write to is set by `--destination`.\n");
 			printf("\tThe file to read from disk is set by `--file`.\n");
+		} else
+
+		// mode rename
+		if(strcmp(helpstring, "mode rename") == 0) {
+			printf("--mode rename\n");
+			printf("\tRename an existing file.\n");
+			printf("\tThe field to write to is set by `--destination`.\n");
+			printf("\tThe field to read from is set by `--file`.\n");
 		} else
 
 		// mode clone
@@ -630,6 +671,7 @@ enum MODES {
 	EDIT_MODE,
 	COPY_MODE,
 	CLONE_MODE,
+	RENAME_MODE,
 	DELETE_MODE,
 	INVALID_MODE,
 };
@@ -770,6 +812,9 @@ int main(int argc, char* argv[]) {
 		} else
 		if(strcmp(mode_string, "clone") == 0) {
 			current_mode = CLONE_MODE;
+		} else
+		if(strcmp(mode_string, "rename") == 0) {
+			current_mode = RENAME_MODE;
 		} else
 		if(strcmp(mode_string, "delete") == 0) {
 			current_mode = DELETE_MODE;
@@ -1064,6 +1109,9 @@ int main(int argc, char* argv[]) {
 		case CLONE_MODE:
 			lua_pushstring(L, "clone");
 			break;
+		case RENAME_MODE:
+			lua_pushstring(L, "rename");
+			break;
 		case DELETE_MODE:
 			lua_pushstring(L, "delete");
 			break;
@@ -1105,6 +1153,9 @@ int main(int argc, char* argv[]) {
     		break;
     	case CLONE_MODE:
     		run_clone_mode(L, argfile, destination);
+    		break;
+    	case RENAME_MODE:
+    		run_rename_mode(L, argfile, destination);
     		break;
     	case DELETE_MODE:
     		run_delete_mode(L, argfile);
