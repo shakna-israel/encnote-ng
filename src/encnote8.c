@@ -337,8 +337,6 @@ int LuaGenerateString(lua_State* L) {
 	// TODO: Type check...
 	const size_t length = lua_tointeger(L, 2);
 
-	printf("Pattern: %s\n", pattern);
-
 	lua_State* L2 = luaL_newstate();
 	luaL_openlibs(L2);
 	lua_register(L2, "BetterRandom", LuaRandom);
