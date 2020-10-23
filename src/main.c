@@ -488,6 +488,11 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("Overwrites the two given files and encrypts the current data, if successful.\n");
 			printf("Returns a boolean.\n");
 			fputc('\n', stdout);
+
+			printf("CliArgs()\n");
+			printf("Creates a global table `cli_args` by parsing the `arg` table in the same manner as the usual CLI parser.\n");
+			printf("Returns nil.\n");
+			fputc('\n', stdout);
 		} else
 
 		{
@@ -519,6 +524,12 @@ enum MODES {
 
 // TODO: arbitrary command
 // TODO: Example git-hooks...
+
+int LuaCli(lua_State* L) {
+	luaL_dostring(L, src_cli_lua);
+
+	return 0;
+}
 
 int main(int argc, char* argv[]) {
 	lua_State* CLI_LUA = luaL_newstate();	
@@ -806,6 +817,7 @@ int main(int argc, char* argv[]) {
 	lua_register(L, "Generate", LuaGenerateString);
 	lua_register(L, "Decrypt", LuaDecrypt);
 	lua_register(L, "Encrypt", LuaEncrypt);
+	lua_register(L, "CliArgs", LuaCli);
 
 	// Expose a raw arg table...
 	lua_createtable(L, 0, 0);
