@@ -3,6 +3,7 @@
 #include <precommand.h>
 #include <postcommand.h>
 #include <preencrypthook.h>
+#include <setpaths.h>
 
 #define _GNU_SOURCE
 #include <sys/mman.h>
@@ -402,28 +403,41 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("A hook is a Lua script that will be run at a particular time.\n");
 			printf("For the following examples, assume that $DATADIR is equal to what is given by `--datadir`.\n");
 			fputc('\n', stdout);
+
 			printf("+ If a file is located at `$DATADIR/hooks/pre.lua` then it will be called before running the current command.\n");
 			printf("+ If a file is located at `$DATADIR/hooks/post.lua` then it will be called after running the current command.\n");
 			printf("+ If a file is located at `$DATADIR/hooks/preencrypt.lua` then it will be called before running the final re-encryption event.\n");
 			fputc('\n', stdout);
+
 			printf("INFO: Modifying the data provided, apart from the ENCNOTE_DATA table, will have no effect on the running program. (i.e. Changing the mode will do nothing.)\n");
 			printf("This may change in a future version.\n");
 			fputc('\n', stdout);
+
+			printf("Packages:\n");
+			printf("Lua is given access to its usual lookup paths, so you can require installed packages.\n");
+			printf("However, the paths are rewritten to prefer packages installed into `$DATADIR/packages`.\n");
+			fputc('\n', stdout);
+
 			printf("Available Data:\n");
 			printf("All hooks have these available to them:\n");
 			fputc('\n', stdout);
+
 			printf("The Lua standard libraries.\n");
 			fputc('\n', stdout);
+
 			printf("ENCNOTE_DATA\n");
 			printf("\tA table of our unencrypted data, where the keys are strings of the file names and the values are strings of the content.\n");
 			printf("\tWARNING: If you change the type from string for either key or value, you will corrupt your repository.\n");
 			fputc('\n', stdout);
-			printf("args\n");
+
+			printf("arg\n");
 			printf("\tA sequence-like table of the raw arguments given to the program.\n");
 			fputc('\n', stdout);
-			printf("varargs\n");
+
+			printf("vararg\n");
 			printf("\tA key-value table of parsed information from the command line arguments, and other things such as the data directory.\n");
 			fputc('\n', stdout);
+			
 			printf("BetterRandom(upper-bound)\n");
 			printf("A function that hooks into our cryptographic library to supply a better random number generator.\n");
 			printf("\tReturns: A cryptographically safe random number.\n");
@@ -821,6 +835,11 @@ int main(int argc, char* argv[]) {
 			break;
 	}
 	lua_settable(L, -3);
+
+	// Modify our import paths to prefer $DATADIR/packages/*
+	lua_pushlstring(L, src_set_paths_lua, src_set_paths_lua_len);
+	lua_setglobal(L, "setpaths");
+	luaL_dostring(L, "load(setpaths)();setpaths=nil;");
 
 	// Run pre-command hook if it exists...
 	luaL_dostring(L, src_pre_command_hook_lua);

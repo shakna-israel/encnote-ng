@@ -3,7 +3,7 @@ LIBLUA=`pkg-config --libs --cflags lua5.3`
 INCLUDES=-Iinclude
 OUTNAME=encnote8
 
-all: cli.h pattern.h precommand.h postcommand.h preencrypthook.h
+all: cli.h pattern.h precommand.h postcommand.h preencrypthook.h setpaths.h
 	$(CC) -g $(LIBSODIUM) $(LIBLUA) -lrt $(INCLUDES) src/encnote8.c src/main.c -o $(OUTNAME)
 
 .PHONY: cli.h
@@ -26,10 +26,15 @@ postcommand.h:
 preencrypthook.h:
 	xxd -i src/pre_encrypt_command_hook.lua > include/preencrypthook.h
 
+.PHONY: setpaths.h
+setpaths.h:
+	xxd -i src/set_paths.lua > include/setpaths.h
+
 clean:
 	-rm include/cli.h
 	-rm include/pattern.h
 	-rm include/precommand.h
 	-rm include/postcommand.h
 	-rm include/preencrypthook.h
+	-rm include/setpaths.h
 	-rm $(OUTNAME)
