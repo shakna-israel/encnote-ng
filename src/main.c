@@ -24,11 +24,13 @@ void run_ls_mode(lua_State* L) {
 
 void run_generate_mode(lua_State* L, const char* argfile, size_t length, char* pattern) {
 	if(argfile == NULL) {
-		// TODO: Error...
+		// Error...
+		fprintf(stderr, "ERROR: Generate failed. No `--file` given.\n");
 		return;
 	}
 	
 	if(generate(L, argfile, length, pattern) != true) {
+		// Generate failed for unknown reason.
 		fprintf(stderr, "ERROR: Generate failed.\n");
 	}
 }
@@ -40,12 +42,13 @@ void run_view_mode(lua_State* L, const char* argfile) {
 
 		luaL_dostring(L, "print(ENCNOTE_DATA[argfile] or ''); argfile=nil;");
 	} else {
-		fprintf(stderr, "%s\n", "No --file supplied.");
+		fprintf(stderr, "%s\n", "ERROR: No --file supplied.");
 	}
 }
 
 void run_edit_mode(lua_State* L, const char* argfile) {
 	if(argfile == NULL) {
+		fprintf(stderr, "%s\n", "ERROR: No --file supplied.");
 		return;
 	}
 
@@ -90,7 +93,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 		fd = shm_open(anon_name, O_RDWR | O_CREAT | O_EXCL, mode);
 	}
 
-	// TODO: Handle safety...
+	// Handle safety...
 	if(fd < 0) {
 		switch(errno) {
 			case EACCES:
@@ -112,6 +115,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 				printf("%s\n", "System file limit reached.");
 				break;
 		}
+		// Let the OS clean things up. Something catastrophic when wrong.
 		exit(1);
 	}
 
@@ -128,9 +132,13 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 
 	size_t written = fwrite(str, sizeof(char), length, f);
 	if(written != length) {
-		// TODO: Incomplete data...
+		// Incomplete data...
+		fprintf(stderr, "%s\n", "ERROR: Failed to write information to memory correctly.\n");
+		ftruncate(fd, 0);
+		shm_unlink(anon_name);
+		exit(1);
 	}
-
+	// Forget this...
 	luaL_dostring(L, "argfile=nil");
 
 	// Find the actual filepath!
@@ -142,7 +150,11 @@ void run_edit_mode(lua_State* L, const char* argfile) {
     sprintf(proclnk, "/proc/self/fd/%d", fd);
     r = readlink(proclnk, filename, MAXSIZE);
     if(r < 0) {
-    	// TODO: Fail
+    	// Fail
+    	fprintf(stderr, "%s\n", "ERROR: Failed to read memory file location correctly.\n");
+		ftruncate(fd, 0);
+		shm_unlink(anon_name);
+		exit(1);
     }
     filename[r] = '\0';
 
@@ -156,10 +168,20 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	size_t com_bytes = snprintf(NULL, 0, "%s %s", editor, filename);
 	char* com_buf = calloc(com_bytes + 2, sizeof(char));
 	if(com_buf == NULL) {
-		// TODO: Safety
+		// Safety
+		fprintf(stderr, "%s\n", "ERROR: Failed to allocate memory to call $EDITOR.\n");
+		truncate(filename, 0);
+		shm_unlink(anon_name);
+		exit(1);
 	}
-	snprintf(com_buf, com_bytes + 1, "%s %s", editor, filename);
-	// TODO: Check the right number wrote...
+	size_t comwri = snprintf(com_buf, com_bytes + 1, "%s %s", editor, filename);
+	if(comwri != com_bytes) {
+		// Check the right number of bytes wrote...
+		fprintf(stderr, "%s\n", "ERROR: Failed to write to $EDITOR caller correctly.\n");
+		truncate(filename, 0);
+		shm_unlink(anon_name);
+		exit(1);
+	}
 
 	system(com_buf);
 	sodium_memzero(com_buf, com_bytes + 1);
@@ -179,6 +201,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	f = fopen(filename, "rb");
 	if(f == NULL) {
 		// The file has disappeared!
+		shm_unlink(anon_name);
 		return;
 	}
 	// 0 the file out...
@@ -192,6 +215,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	f = fopen(filename, "wb");
 	if(f == NULL) {
 		// The file has disappeared!
+		shm_unlink(anon_name);
 		return;
 	}
 
@@ -473,12 +497,6 @@ enum MODES {
 // - Need to expose our run commands as an API...
 // - And expose BetterRandom...
 
-// TODO: Lua-based user hooks
-// - Needs access to Lua-based user commands
-// - pre-command
-// - post-command
-// - pre-encrypt
-
 // TODO: arbitrary command
 // TODO: Example git-hooks...
 
@@ -509,16 +527,15 @@ int main(int argc, char* argv[]) {
 
 	// Parse arguments into cli_args table
 	luaL_dostring(CLI_LUA, src_cli_lua);
-	
-	// TODO: Disable this line...
-	//luaL_dostring(CLI_LUA, "for k, v in pairs(cli_args) do print(k, v) end");
 
 	lua_getglobal(CLI_LUA, "cli_args");
 	lua_getfield(CLI_LUA, -1, "progname");
 	const char* progname_tmp = lua_tostring(CLI_LUA, -1);
 	char* progname = strdup(progname_tmp);
 	if(progname == NULL) {
-		// TODO: Safety
+		// Safety
+		fprintf(stderr, "%s\n", "ERROR: Memory allocation error when assigning program name.\n");
+		exit(1);
 	}
 
 	// Check if help called
@@ -620,7 +637,9 @@ int main(int argc, char* argv[]) {
 		const char* arg_file_tmp = lua_tostring(CLI_LUA, -1);
 		argfile = strdup(arg_file_tmp);
 		if(argfile == NULL) {
-			// TODO: Safety
+			// Safety
+			fprintf(stderr, "%s\n", "ERROR: Memory allocation error when assigning `--file`.\n");
+			exit(1);
 		}
 	}
 
@@ -643,7 +662,9 @@ int main(int argc, char* argv[]) {
 		const char* tmp = lua_tostring(CLI_LUA, -1);
 		keyfilename = strdup(tmp);
 		if(keyfilename == NULL) {
-			// TODO: Safety
+			// Safety
+			fprintf(stderr, "%s\n", "ERROR: Memory allocation error when allocating key filename.\n");
+			exit(1);
 		}
 	} else {
 		lua_pop(CLI_LUA, -1);
@@ -657,7 +678,9 @@ int main(int argc, char* argv[]) {
 		const char* tmp = lua_tostring(CLI_LUA, -1);
 		datafilename = strdup(tmp);
 		if(datafilename == NULL) {
-			// TODO: Safety
+			// Safety
+			fprintf(stderr, "%s\n", "ERROR: Memory allocation error when allocating data filename.\n");
+			exit(1);
 		}
 	} else {
 		lua_pop(CLI_LUA, -1);
@@ -671,7 +694,9 @@ int main(int argc, char* argv[]) {
 		const char* tmp = lua_tostring(CLI_LUA, -1);
 		argpattern = strdup(tmp);
 		if(argpattern == NULL) {
-			// TODO: Safety
+			// Safety
+			fprintf(stderr, "%s\n", "ERROR: Memory allocation error when allocating `--pattern`.\n");
+			exit(1);
 		}
 	} else {
 		lua_pop(CLI_LUA, -1);
@@ -685,7 +710,9 @@ int main(int argc, char* argv[]) {
 		// $HOME/.local/share/encnote8/key
 
 		if(datadir == NULL) {
-			// TODO: Allocation/search failure!
+			// Allocation/search failure!
+			fprintf(stderr, "%s\n", "ERROR: Unable to find our data directory! Please assign $XDG_DATA_HOME.\n");
+			exit(1);
 		} else {
 			// Ensure data directory exists...
 			struct stat st = {0};
@@ -700,7 +727,9 @@ int main(int argc, char* argv[]) {
 
 		path = calloc(strlen(datadir) + strlen(tail) + 1, sizeof(char));
 		if(path == NULL) {
-			// TODO: Allocation failure...
+			// Allocation failure...
+			fprintf(stderr, "%s\n", "ERROR: Memory allocation error when creating the path for our data directory.\n");
+			exit(1);
 		}
 
 		memcpy(path, datadir, strlen(datadir));
@@ -716,7 +745,9 @@ int main(int argc, char* argv[]) {
 		// $HOME/.local/share/encnote8/data
 
 		if(datadir == NULL) {
-			// TODO: Allocation/search failure!
+			// Allocation/search failure!
+			fprintf(stderr, "%s\n", "ERROR: Unable to find our data directory! Please assign $XDG_DATA_HOME.\n");
+			exit(1);
 		} else {
 			// Ensure data directory exists...
 			struct stat st = {0};
@@ -731,7 +762,9 @@ int main(int argc, char* argv[]) {
 
 		path = calloc(strlen(datadir) + strlen(tail) + 1, sizeof(char));
 		if(path == NULL) {
-			// TODO: Allocation failure...
+			// Allocation failure...
+			fprintf(stderr, "%s\n", "ERROR: Memory allocation error when creating the path for our data directory.\n");
+			exit(1);
 		}
 
 		memcpy(path, datadir, strlen(datadir));
@@ -862,8 +895,11 @@ int main(int argc, char* argv[]) {
     		break;
     	case EDIT_MODE:
     		run_edit_mode(L, argfile);
+    		break;
     	default:
-    		// TODO: invalid state. Somehow.
+    		// invalid state. Somehow.
+    		fprintf(stderr, "%s\n", "ERROR: Unreachable mode reached.\n");
+    		exit(1);
     		break;
     }
 
