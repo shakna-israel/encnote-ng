@@ -71,7 +71,9 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 char* get_data_dir();
 
 
-// You probably don't want to touch this...
+// You probably don't want to touch these...
 int LuaRandom(lua_State* L);
+int LuaDump(lua_State* L);
+int LuaGenerateString(lua_State* L);
 
 #endif

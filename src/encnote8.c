@@ -47,6 +47,18 @@ struct Field get_field(lua_State* LuaState, const char* key, size_t key_len) {
 	return r;
 }
 
+int LuaDump(lua_State* L) {
+	
+	luaL_dostring(L, "local x = 'ENCNOTE_DATA = {';"
+	"for k, v in pairs(ENCNOTE_DATA) do\n"
+	"x = x .. string.format(\"[%q] = %q,\", k, v);\n"
+	"end\n"
+	"x = x .. '}'\n"
+	"return x");
+
+	return 1;
+}
+
 struct Field dump_data(lua_State* LuaState) {
 	int status = luaL_dostring(LuaState, "local x = 'ENCNOTE_DATA = {';"
 	"for k, v in pairs(ENCNOTE_DATA) do\n"
@@ -285,6 +297,46 @@ int LuaRandom(lua_State* L) {
 	uint32_t result = randombytes_uniform(upper_bound);
 
 	lua_pushinteger(L, result);
+	return 1;
+}
+
+int LuaGenerateString(lua_State* L) {
+	// TODO: Type check...
+	const char* pattern = lua_tostring(L, 1);
+	// TODO: Type check...
+	const size_t length = lua_tointeger(L, 2);
+
+	printf("Pattern: %s\n", pattern);
+
+	lua_State* L2 = luaL_newstate();
+	luaL_openlibs(L2);
+	lua_register(L2, "BetterRandom", LuaRandom);
+
+	luaL_dostring(L2, src_pattern_lua);
+
+	lua_pushstring(L2, pattern);
+	lua_setglobal(L2, "pattern");
+
+	lua_pushinteger(L2, length);
+	lua_setglobal(L2, "length");
+
+	luaL_dostring(L2, "return generate_string(length, pattern)");
+	// TODO: Error check
+
+	size_t pat_length = 0;
+	const char* patstr = lua_tolstring(L2, -1, &pat_length);
+
+	int t = lua_type(L2, -1);
+	if(t != LUA_TSTRING) {
+		// Error happened in Lua land.
+		lua_close(L2);
+		return 0;
+	}
+
+	// Return the value
+	lua_pushlstring(L, patstr, pat_length);
+
+	lua_close(L2);
 	return 1;
 }
 

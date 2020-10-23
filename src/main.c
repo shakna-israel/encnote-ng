@@ -468,6 +468,15 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("A function that hooks into our cryptographic library to supply a better random number generator.\n");
 			printf("\tReturns: A cryptographically safe random number.\n");
 			fputc('\n', stdout);
+
+			printf("Dump()\n");
+			printf("A function that returns a string-representation of ENCNOTE_DATA.\n");
+			fputc('\n', stdout);
+
+			printf("Generate(pattern, length)\n");
+			printf("A function that returns a cryptographically random string using the given pattern and length.\n");
+			pritnf("See also: `--pattern`\n");
+			fputc('\n', stdout);
 		} else
 
 		{
@@ -782,6 +791,8 @@ int main(int argc, char* argv[]) {
 
 	// Expose a cryptographic random...
 	lua_register(L, "BetterRandom", LuaRandom);
+	lua_register(L, "Dump", LuaDump);
+	lua_register(L, "Generate", LuaGenerateString);
 
 	// Expose a raw arg table...
 	lua_createtable(L, 0, 0);
