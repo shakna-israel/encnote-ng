@@ -87,8 +87,12 @@ bool encrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	unsigned char key[crypto_secretbox_KEYBYTES];
 	unsigned char nonce[crypto_secretbox_NONCEBYTES];
 
-	// TODO: Consider sodium_malloc
 	unsigned char* ciphertext = calloc(CIPHERTEXT_LEN, sizeof(unsigned char));
+	if(ciphertext == NULL) {
+		// Safety
+		fprintf(stderr, "%s\n", "ERROR: Memory allocation error when creating ciphertext buffer.\n");
+		return false;
+	}
 
 	crypto_secretbox_keygen(key);
 	randombytes_buf(nonce, sizeof nonce);
