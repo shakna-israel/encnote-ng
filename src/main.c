@@ -416,6 +416,8 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("Packages:\n");
 			printf("Lua is given access to its usual lookup paths, so you can require installed packages.\n");
 			printf("However, the paths are rewritten to prefer packages installed into `$DATADIR/packages`.\n");
+			printf("An example of using LuaRocks to install to this directory might be:\n");
+			printf("\tluarocks install --tree \"$(encnote8 -D)/packages\" \"$library\" \"$version\"\n");
 			fputc('\n', stdout);
 
 			printf("Available Data:\n");
@@ -437,7 +439,7 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("vararg\n");
 			printf("\tA key-value table of parsed information from the command line arguments, and other things such as the data directory.\n");
 			fputc('\n', stdout);
-			
+
 			printf("BetterRandom(upper-bound)\n");
 			printf("A function that hooks into our cryptographic library to supply a better random number generator.\n");
 			printf("\tReturns: A cryptographically safe random number.\n");
