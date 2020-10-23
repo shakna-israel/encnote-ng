@@ -4,6 +4,7 @@
 #include <postcommand.h>
 #include <preencrypthook.h>
 #include <setpaths.h>
+#include <utilities.h>
 
 #define _GNU_SOURCE
 #include <sys/mman.h>
@@ -493,6 +494,21 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("Creates a global table `cli_args` by parsing the `arg` table in the same manner as the usual CLI parser.\n");
 			printf("Returns nil.\n");
 			fputc('\n', stdout);
+
+			printf("utilities.in_sequence(value, table)\n");
+			printf("Useful for checking if a value exists inside a sequence-like table.\n");
+			printf("Returns a boolean.\n");
+			fputc('\n', stdout);
+
+			printf("utilities.utf8_substring(str, i, j)\n");
+			printf("Get a substring from a UTF8 sequence, without breaking any individual character.\n");
+			printf("Works much like `string.sub`, but without negative values allowed.\n");
+			fputc('\n', stdout);
+
+			printf("utilities.split_string(str, pattern)\n");
+			printf("An opinionated split string function.\n");
+			printf("Returns a sequence-like table.\n");
+			fputc('\n', stdout);
 		} else
 
 		{
@@ -830,6 +846,11 @@ int main(int argc, char* argv[]) {
 		// Set the key/value in the table...
 		lua_settable(L, -3);
 	}
+
+	// Expose some useful utilities
+	lua_pushlstring(L, src_utilities_lua, src_utilities_lua_len);
+	lua_setglobal(L, "setutilities");
+	luaL_dostring(L, "load(setutilities)();setutilities=nil;");
 
 	// Reconstruct a table of parsed args...
 	lua_createtable(L, 0, 0);

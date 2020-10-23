@@ -4,3 +4,4 @@ include/postcommand.h
 include/precommand.h
 include/preencrypthook.h
 include/setpaths.h
+include/utilities.h
