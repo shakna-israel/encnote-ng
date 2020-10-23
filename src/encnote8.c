@@ -291,6 +291,21 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	return true;
 }
 
+int LuaDecrypt(lua_State* L) {
+	// TODO: Type check...
+	const char* keyfile = lua_tostring(L, 1);
+	// TODO: Type check...
+	const char* datafile = lua_tostring(L, 2);
+
+	if(decrypt_data(L, keyfile, datafile)) {
+		lua_pushboolean(L, 1);
+	} else {
+		lua_pushboolean(L, 0);
+	}
+
+	return 1;
+}
+
 int LuaRandom(lua_State* L) {
 	// TODO: Type check...
 	int upper_bound = lua_tointeger(L, 1);

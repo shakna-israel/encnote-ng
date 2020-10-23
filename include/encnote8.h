@@ -75,5 +75,6 @@ char* get_data_dir();
 int LuaRandom(lua_State* L);
 int LuaDump(lua_State* L);
 int LuaGenerateString(lua_State* L);
+int LuaDecrypt(lua_State* L);
 
 #endif

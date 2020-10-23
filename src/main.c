@@ -476,7 +476,12 @@ void run_help(const char* progname, const char* helpstring) {
 
 			printf("Generate(pattern, length)\n");
 			printf("A function that returns a cryptographically random string using the given pattern (string) and length (integer).\n");
-			pritnf("See also: `--pattern`\n");
+			printf("See also: `--pattern`\n");
+			fputc('\n', stdout);
+
+			printf("Decrypt(key-filename, data-filename)\n");
+			printf("Overwrites the ENCNOTE_DATA table if successful.\n");
+			printf("Returns a boolean.\n");
 			fputc('\n', stdout);
 		} else
 
@@ -794,6 +799,7 @@ int main(int argc, char* argv[]) {
 	lua_register(L, "BetterRandom", LuaRandom);
 	lua_register(L, "Dump", LuaDump);
 	lua_register(L, "Generate", LuaGenerateString);
+	lua_register(L, "Decrypt", LuaDecrypt);
 
 	// Expose a raw arg table...
 	lua_createtable(L, 0, 0);
