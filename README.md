@@ -18,6 +18,22 @@ As most actions also _roll_ your keyfile, losing it may not be the end of the wo
 
 This is not a state-of-the-art encryption tool, this is a "good enough" encryption tool, which _is not yet good enough_.
 
+### Library or CLI Tool?
+
+Both.
+
+See Building->Embedding for using it as a library, for extending your own applications.
+
+For the CLI Tool, after building, there is extensive documentation available by running:
+
+	./encnote8 --help
+
+For further specific help, see:
+
+	./encnote8 --helpinfo "$THING"
+
+The CLI tool is fairly advanced, and supports things like Lua hooks, allowing you to modify behaviour and so on, and has feature-parity with anything that can be done by running a command.
+
 ---
 
 ## Building

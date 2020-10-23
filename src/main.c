@@ -677,7 +677,6 @@ enum MODES {
 };
 
 // TODO: clipboard (X11 or SDL...)
-// TODO: rename existing file
 // TODO: grep-like search file
 // TODO: find-like search for file
 
