@@ -87,18 +87,18 @@ Then the basic approach might be:
 
 	#include <encnote8.h>
 
-    const char* keyfilename = "/some/key";
-    const char* datafilename = "/some/data";
+	const char* keyfilename = "/some/key";
+	const char* datafilename = "/some/data";
 
-    lua_State* L = luaL_newstate();
-    init_data(L, keyfilename, datafilename);
+	lua_State* L = luaL_newstate();
+	init_data(L, keyfilename, datafilename);
 
-    // Data is now decrypted into the ENCNOTE_DATA global table in `L`.
+	// Data is now decrypted into the ENCNOTE_DATA global table in `L`.
 
-    // ... Do stuff here...
+	// ... Do stuff here...
 
-    // Re-encrypt to disk...
-    bool e = encrypt_data(L, keyfilename, datafilename);
+	// Re-encrypt to disk...
+	bool e = encrypt_data(L, keyfilename, datafilename);
 	if(e == false) {
 		fprintf(stderr, "%s\n", "ERROR: Something went wrong whilst encrypting.");
 	}
@@ -118,16 +118,16 @@ These hooks have available a number of functions to make them practical.
 
 As a demonstration of what you might use a hook for, consider this post-command hook:
 
-    local t = os.time()
+	local t = os.time()
 
-    local key = string.format("%sbackup_%s.key", vararg['datadir'], t)
-    local data = string.format("%sbackup_%s.data", vararg['datadir'], t)
+	local key = string.format("%sbackup_%s.key", vararg['datadir'], t)
+	local data = string.format("%sbackup_%s.data", vararg['datadir'], t)
 
-    if vararg['mode'] ~= 'view' and vararg['mode'] ~= 'ls' and vararg['mode'] ~= 'dump' then
-	    if not Encrypt(key, data) then
-		    print("Failed to write backup...")
-    	end
-    end
+	if vararg['mode'] ~= 'view' and vararg['mode'] ~= 'ls' and vararg['mode'] ~= 'dump' then
+		if not Encrypt(key, data) then
+			print("Failed to write backup...")
+		end
+	end
 
 Every time a command is run that is not one of `view`, `ls` and `dump`, once the command has completed, a copy of the database and its keys are saved to our data directory.
 
