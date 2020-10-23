@@ -1,5 +1,8 @@
 #include <encnote8.h>
 #include <cli.h>
+#include <precommand.h>
+#include <postcommand.h>
+#include <preencrypthook.h>
 
 #define _GNU_SOURCE
 #include <sys/mman.h>
@@ -705,7 +708,84 @@ int main(int argc, char* argv[]) {
 		lua_settable(L, -3);
 	}
 
-	// TODO: Reconstruct a table of parsed args...
+	// Reconstruct a table of parsed args...
+	lua_createtable(L, 0, 0);
+	lua_setglobal(L, "vararg");
+
+	// Set program name
+	lua_getglobal(L, "vararg");
+	lua_pushstring(L, "progname");
+	lua_pushstring(L, progname);
+	lua_settable(L, -3);
+
+	// Set the data directory
+	lua_getglobal(L, "vararg");
+	lua_pushstring(L, "datadir");
+	lua_pushstring(L, datadir);
+	lua_settable(L, -3);
+
+	// Set the keyfile
+	lua_getglobal(L, "vararg");
+	lua_pushstring(L, "keyfile");
+	lua_pushstring(L, keyfilename);
+	lua_settable(L, -3);
+
+	// Set the datafile
+	lua_getglobal(L, "vararg");
+	lua_pushstring(L, "datafile");
+	lua_pushstring(L, datafilename);
+	lua_settable(L, -3);
+
+	// Set the pattern if we have one
+	if(argpattern != NULL) {
+		lua_getglobal(L, "vararg");
+		lua_pushstring(L, "pattern");
+		lua_pushstring(L, argpattern);
+		lua_settable(L, -3);
+	}
+
+	// Set the specified file if we have one
+	if(argfile != NULL) {
+		lua_getglobal(L, "vararg");
+		lua_pushstring(L, "file");
+		lua_pushstring(L, argfile);
+		lua_settable(L, -3);
+	}
+
+	// Set the length
+	lua_getglobal(L, "vararg");
+	lua_pushstring(L, "length");
+	lua_pushnumber(L, arglength);
+	lua_settable(L, -3);
+
+	// Reconstruct mode
+	lua_getglobal(L, "vararg");
+	lua_pushstring(L, "mode");
+	switch(current_mode) {
+		case DUMP_MODE:
+			lua_pushstring(L, "dump");
+			break;
+		case LS_MODE:
+			lua_pushstring(L, "ls");
+			break;
+		case GENERATE_MODE:
+			lua_pushstring(L, "generate");
+			break;
+		case VIEW_MODE:
+			lua_pushstring(L, "view");
+			break;
+		case EDIT_MODE:
+			lua_pushstring(L, "edit");
+			break;
+		default:
+			// Unknown mode... Push false.
+			lua_pushboolean(L, 0);
+			break;
+	}
+	lua_settable(L, -3);
+
+	// Run pre-command hook if it exists...
+	luaL_dostring(L, src_pre_command_hook_lua);
 
 	// Check what we want to do...
     switch(current_mode) {
@@ -727,6 +807,12 @@ int main(int argc, char* argv[]) {
     		// TODO: invalid state. Somehow.
     		break;
     }
+
+    // Run post-command hook if it exists...
+	luaL_dostring(L, src_post_command_hook_lua);
+
+    // Run pre-encrypt hook if it exists...
+    luaL_dostring(L, src_pre_encrypt_command_hook_lua);
 
     // Re-encrypt!
     bool e = encrypt_data(L, keyfilename, datafilename);
