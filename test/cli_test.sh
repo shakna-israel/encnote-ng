@@ -11,13 +11,16 @@ if [ "$?" -ne 1 ]; then
 	fails=$(("$fails" + 1))
 fi
 
+# Ensure the data directory exists... (Because runners are weird.)
+datadir="$("$root"/../encnote8 --datadir)"
+mkdir -p "$datadir"
+
 # Test creating new repo...
 "$root"/../encnote8 --mode ls >/dev/null
 if [ "$?" -ne 0 ]; then
 	(>&2 echo "FAIL: Unable to initialise new repository.")
 	fails=$(("$fails" + 1))
 fi
-datadir="$("$root"/../encnote8 --datadir)"
 if [ ! -r "${datadir}key" ]; then
 	(>&2 echo "FAIL: Unable to initialise new repository.")
 	fails=$(("$fails" + 1))

@@ -91,6 +91,7 @@ struct Field dump_data(lua_State* LuaState) {
 	return r;
 }
 
+// TODO: This should probably return an enum of success/error states... Instead of printing.
 bool encrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile) {
 	struct Field f = dump_data(LuaState);
 
@@ -188,6 +189,7 @@ bool encrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	return true;
 }
 
+// TODO: This should probably return an enum of success/error states... Instead of printing.
 bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile) {
 	// Load key
 	lua_State* L = luaL_newstate();
