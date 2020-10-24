@@ -5,3 +5,4 @@ include/precommand.h
 include/preencrypthook.h
 include/setpaths.h
 include/utilities.h
+include/customcommand.h

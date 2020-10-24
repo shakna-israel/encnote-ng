@@ -5,6 +5,7 @@
 #include <preencrypthook.h>
 #include <setpaths.h>
 #include <utilities.h>
+#include <customcommand.h>
 
 #define _GNU_SOURCE
 #include <sys/mman.h>
@@ -32,6 +33,26 @@ void run_delete_mode(lua_State* L, const char* filename) {
 	lua_setglobal(L, "filename");
 
 	luaL_dostring(L, "ENCNOTE_DATA[filename] = nil; filename=nil;");
+}
+
+bool run_custom_mode(lua_State* L) {
+	luaL_dostring(L, "return string.format(\"%scommands/%s.lua\", vararg['datadir'], vararg['custommode'])");
+	const char* fname = lua_tostring(L, -1);
+	FILE* f = fopen(fname, "rb");
+	if(f == NULL) {
+		lua_getglobal(L, "vararg");
+		lua_getfield(L, -1, "custommode");
+		const char* custom_mode = lua_tostring(L, -1);
+		fprintf(stderr, "ERROR: Unknown Mode: <%s>\n", custom_mode);
+		return false;
+	} else {
+		fclose(f);
+	}
+
+	lua_pushlstring(L, src_custom_command_lua, src_custom_command_lua_len);
+	lua_setglobal(L, "setcustom");
+	luaL_dostring(L, "(function() local x = load(setcustom)(); setcustom=nil; return x; end)()");
+	return true;
 }
 
 void run_clone_mode(lua_State* L, const char* filename, const char* destination) {
@@ -397,6 +418,11 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\t+ dump\n");
 			printf("\t\tDump a Lua-compatible piece of code containing the entire repository to the console.\n");
 			printf("\t\tSee --helpinfo 'mode dump' for more.\n");
+
+			printf("\t+ More modes can be added with Lua scripting.\n");
+			printf("\t\tPlace a file into `$DATADIR/commands/mycommand.lua` to add the `mycommand` mode.\n");
+			printf("\t\tThe full Lua API is available to the script.\n");
+			printf("\t\tSee --helpinfo 'hooks' for more on the Lua API.\n");
 		} else
 
 		// mode edit
@@ -673,6 +699,7 @@ enum MODES {
 	CLONE_MODE,
 	RENAME_MODE,
 	DELETE_MODE,
+	UNKNOWN_MODE,
 	INVALID_MODE,
 };
 
@@ -705,6 +732,7 @@ int main(int argc, char* argv[]) {
 	char* argfile = NULL;
 	char* argpattern = NULL;
 	char* destination = NULL;
+	char* custom_mode = NULL;
 	size_t arglength = 0;
 
 	lua_createtable(CLI_LUA, 0, 0);
@@ -819,12 +847,12 @@ int main(int argc, char* argv[]) {
 			current_mode = DELETE_MODE;
 		} else
 		{
-			fprintf(stderr, "ERROR: %s\n", "Invalid or no mode set.");
-			run_help(progname, "mode");
-			free(datadir);
-			free(progname);
-			lua_close(CLI_LUA);
-			return 1;	
+			current_mode = UNKNOWN_MODE;
+			custom_mode = strdup(mode_string);
+			if(custom_mode == NULL) {
+				fprintf(stderr, "%s\n", "ERROR: Memory allocation failure when allocating custom mode string.");
+				exit(1);
+			}
 		}
 	} else {
 		fprintf(stderr, "ERROR: %s\n", "Invalid or no mode set.");
@@ -1077,6 +1105,14 @@ int main(int argc, char* argv[]) {
 		lua_settable(L, -3);
 	}
 
+	// Set the custom mode, if we have one
+	if(custom_mode != NULL) {
+		lua_getglobal(L, "vararg");
+		lua_pushstring(L, "custommode");
+		lua_pushstring(L, custom_mode);
+		lua_settable(L, -3);
+	}
+
 	// Set the length
 	lua_getglobal(L, "vararg");
 	lua_pushstring(L, "length");
@@ -1114,12 +1150,17 @@ int main(int argc, char* argv[]) {
 		case DELETE_MODE:
 			lua_pushstring(L, "delete");
 			break;
+		case UNKNOWN_MODE:
+			lua_pushstring(L, custom_mode);
+			break;
 		default:
 			// Unknown mode... Push false.
 			lua_pushboolean(L, 0);
 			break;
 	}
 	lua_settable(L, -3);
+
+	free(custom_mode);
 
 	// Modify our import paths to prefer $DATADIR/packages/*
 	lua_pushlstring(L, src_set_paths_lua, src_set_paths_lua_len);
@@ -1158,6 +1199,23 @@ int main(int argc, char* argv[]) {
     		break;
     	case DELETE_MODE:
     		run_delete_mode(L, argfile);
+    		break;
+    	case UNKNOWN_MODE:
+    		if(!run_custom_mode(L)) {
+    			run_help(progname, "mode");
+    			free(datafilename);
+				free(keyfilename);
+				free(progname);
+				if(argfile != NULL) {
+					free(argfile);
+				}
+				if(argpattern != NULL) {
+					free(argpattern);
+				}
+				free(datadir);
+				lua_close(L);
+    			exit(1);
+    		}
     		break;
     	default:
     		// invalid state. Somehow.
