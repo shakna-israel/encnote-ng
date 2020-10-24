@@ -42,3 +42,27 @@ utilities.split_string = function(str, pattern)
 
 	return t
 end
+
+utilities.ordered_pairs = function(tbl)
+	local keys = {}
+	for k, _ in pairs(tbl) do
+		keys[#keys + 1] = k
+	end
+	table.sort(keys)
+
+	local index = 0
+	local count = #keys
+	local get_next = function(i)
+		return i + 1
+	end
+	local check = function(i, c)
+		return i <= c
+	end
+
+	return function()
+		index = get_next(index)
+		if check(index, count) then
+			return keys[index], tbl[keys[index]]
+		end
+	end
+end

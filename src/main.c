@@ -21,7 +21,7 @@ void run_dump_mode(lua_State* L) {
 }
 
 void run_ls_mode(lua_State* L) {
-	luaL_dostring(L, "for k, v in pairs(ENCNOTE_DATA) do print(#v, k) end");
+	luaL_dostring(L, "for k, v in utilities.ordered_pairs(ENCNOTE_DATA) do print(#v, k) end");
 }
 
 void run_delete_mode(lua_State* L, const char* filename) {
@@ -680,6 +680,10 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("utilities.split_string(str, pattern)\n");
 			printf("An opinionated split string function.\n");
 			printf("Returns a sequence-like table.\n");
+			fputc('\n', stdout);
+
+			printf("utilities.ordered_pairs(tbl)\n");
+			printf("An iterator like `pairs`, but with an ordered outcome.\n");
 			fputc('\n', stdout);
 		} else
 
