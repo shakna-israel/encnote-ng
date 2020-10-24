@@ -56,7 +56,13 @@ if [ "$(wc -c "$data" | awk '{print $1}')" -lt 1 ]; then
 	fails=$(($fails + 1))
 fi
 
-# TODO: Test help
+# Test help
+n="$("$root"/../encnote8 --help | wc -l | awk '{print $1}')"
+if [ "$n" -lt 10 ]; then
+	(>&2 echo "FAIL: Unable to get help")
+	fails=$(($fails + 1))
+fi
+
 # TODO: Test helpinfo
 # TODO: Test copy
 # TODO: Test ls
