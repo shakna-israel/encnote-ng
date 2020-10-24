@@ -1,0 +1,14 @@
+image: debian/stable
+packages:
+  - lua5.3
+  - lua5.3-dev
+  - xxd
+  - build-essential
+sources:
+  - https://git.sr.ht/~shakna/encnote-ng
+tasks:
+  - test_cli: |
+     cd encnote-ng
+     make clean
+     make
+     make test

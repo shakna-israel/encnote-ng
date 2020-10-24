@@ -11,6 +11,8 @@ if [ "$?" -ne 1 ]; then
 	fails=$(("$fails" + 1))
 fi
 
+# TODO: Test setting keyfile
+# TODO: Test setting datafile
 # TODO: Test creating new repo...
 # TODO: Test help
 # TODO: Test helpinfo
