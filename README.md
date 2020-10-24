@@ -135,6 +135,38 @@ You would write this file somewhere like: `"$(./encnote8 --datadir)"hooks/post.l
 
 ---
 
+## Custom Commands
+
+As well as the provided modes, you can easily implement your own, with custom CLI flags and so on.
+
+Here's an example "backup" mode script. You would place it into `"$(./encnote8 --datadir)"commands/backup.lua`
+
+	local t
+
+	CliArgs()
+	if cli_args['time'] ~= nil then
+	  t = cli_args['time']
+	else
+	  t = os.time()
+	end
+
+	local key = string.format("%sbackup_%s.key", vararg['datadir'], t)
+	local data = string.format("%sbackup_%s.data", vararg['datadir'], t)
+
+	if not Encrypt(key, data) then
+		print("Failed to write backup...")
+	end
+
+And then you can call it like:
+
+	./encnote8 --mode backup
+
+Or, to supply a given suffix:
+
+	./encnote8 --mode backup --time 20201011
+
+---
+
 # License
 
 See the `LICENSE.md` file for the legal text, and remember that you're also linking against Lua and libsodium, and their licenses.
