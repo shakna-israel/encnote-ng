@@ -6,7 +6,7 @@ An embeddable encrypted memory store.
 
 ## About
 
-This is an ***ALPHA*** level attempt at creating an encrypted data store to replace my use cases for [pass](https://www.passwordstore.org/).
+This is an ***BETA*** level attempt at creating an encrypted data store to replace my use cases for [pass](https://www.passwordstore.org/).
 
 It works by binding together [libsodium](http://libsodium.org/)'s cryptobox with [Lua 5.3](lua.org/).
 
@@ -14,9 +14,9 @@ This provides a fairly secure platform for encrypting the data, and so long as y
 
 As most actions also _roll_ your keyfile, losing it may not be the end of the world.
 
-***WARNING***: There are various security holes that are currently gaping like festering wounds. Other processes may also access memory that is handled by a GC, and leak that way.
+***WARNING***: Other processes may also access memory that is handled by a GC, and leak that way.
 
-This is not a state-of-the-art encryption tool, this is a "good enough" encryption tool, which _is not yet good enough_.
+This is not a state-of-the-art encryption tool, this is a "good enough" encryption tool, _for my own purposes_. It may not fit yours.
 
 ### Library or CLI Tool?
 
