@@ -30,8 +30,32 @@ if [ ! -r "${datadir}data" ]; then
 	fails=$(("$fails" + 1))
 fi
 
-# TODO: Test setting keyfile
-# TODO: Test setting datafile
+# Test setting keyfile
+# Test setting datafile
+key="$(mktemp)"
+data="$(mktemp)"
+"$root"/../encnote8 --mode ls --keyfile "$key" --datafile "$data" >/dev/null
+if [ "$?" -ne 0 ]; then
+	(>&2 echo "FAIL: Unable to initialise new custom repository.")
+	fails=$(("$fails" + 1))
+fi
+if [ ! -r "$key" ]; then
+	(>&2 echo "FAIL: Unable to initialise new custom repository.")
+	fails=$(("$fails" + 1))
+fi
+if [ ! -r "$data" ]; then
+	(>&2 echo "FAIL: Unable to initialise new custom repository.")
+	fails=$(("$fails" + 1))
+fi
+if [ "$(wc -c "$key")" -lt 1 ]; then
+	(>&2 echo "FAIL: Unable to initialise new custom repository.")
+	fails=$(("$fails" + 1))
+fi
+if [ "$(wc -c "$data")" -lt 1 ]; then
+	(>&2 echo "FAIL: Unable to initialise new custom repository.")
+	fails=$(("$fails" + 1))
+fi
+
 # TODO: Test help
 # TODO: Test helpinfo
 # TODO: Test copy
@@ -47,5 +71,8 @@ fi
 # TODO: Test pre-hook
 # TODO: Test post-hook
 # TODO: Test preencrypt hook
+
+rm "$key"
+rm "$data"
 
 exit "$fails"
