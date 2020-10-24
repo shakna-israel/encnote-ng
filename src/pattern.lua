@@ -7,6 +7,17 @@ expand_pattern = function(pattern)
 		return string.gsub(expand_pattern(":print:"), ' ', '')
 	end)
 
+	-- :ascii: - All (non-extended) ASCII characters
+	local ascii_space = {}
+	for i=0, 127 do
+		if string.char(i) == '%' then
+			ascii_space[#ascii_space + 1] = '%%'
+		else
+			ascii_space[#ascii_space + 1] = string.char(i)
+		end
+	end
+	pattern = string.gsub(pattern, "%:ascii%:", table.concat(ascii_space))
+
 	-- :print: - all printable characters, including space
 	pattern = string.gsub(pattern, "%:print%:", ":alpha::space::xdigit::punct:")
 
