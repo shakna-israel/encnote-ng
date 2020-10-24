@@ -199,11 +199,17 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	}
 
 	lua_getglobal(L, "keyfile");
+	int t = lua_type(L, -1);
+	if(t != LUA_TTABLE) {
+		// Malformed keyfile
+		return false;
+	}
+
 	lua_getfield(L, -1, "key");
 	// Check is string
-	int t = lua_type(L, -1);
+	t = lua_type(L, -1);
 	if(t =! LUA_TSTRING) {
-		fprintf(stderr, "%s\n", "ERROR: Malformed keyfile.");
+		// Malformed keyfile
 		return false;
 	}
 
@@ -221,7 +227,7 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	// Check is string
 	t = lua_type(L, -1);
 	if(t =! LUA_TSTRING) {
-		fprintf(stderr, "%s\n", "ERROR: Malformed keyfile.");
+		// Malformed keyfile
 		return false;
 	}
 

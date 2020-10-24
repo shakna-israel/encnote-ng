@@ -8,7 +8,7 @@ root="$(dirname "$(realpath "$0")")"
 env -i "$root"/../encnote8 --mode ls 2>/dev/null
 if [ "$?" -ne 1 ]; then
 	(>&2 echo "FAIL: No datadir.")
-	fails=$(("$fails" + 1))
+	fails=$(($fails + 1))
 fi
 
 # Ensure the data directory exists... (Because runners are weird.)
@@ -19,15 +19,15 @@ mkdir -p "$datadir"
 "$root"/../encnote8 --mode ls >/dev/null
 if [ "$?" -ne 0 ]; then
 	(>&2 echo "FAIL: Unable to initialise new repository.")
-	fails=$(("$fails" + 1))
+	fails=$(($fails + 1))
 fi
 if [ ! -r "${datadir}key" ]; then
 	(>&2 echo "FAIL: Unable to initialise new repository.")
-	fails=$(("$fails" + 1))
+	fails=$(($fails + 1))
 fi
 if [ ! -r "${datadir}data" ]; then
 	(>&2 echo "FAIL: Unable to initialise new repository.")
-	fails=$(("$fails" + 1))
+	fails=$(($fails + 1))
 fi
 
 # Test setting keyfile
@@ -37,23 +37,23 @@ data="$(mktemp)"
 "$root"/../encnote8 --mode ls --keyfile "$key" --datafile "$data" >/dev/null
 if [ "$?" -ne 0 ]; then
 	(>&2 echo "FAIL: Unable to initialise new custom repository.")
-	fails=$(("$fails" + 1))
+	fails=$(($fails + 1))
 fi
 if [ ! -r "$key" ]; then
 	(>&2 echo "FAIL: Unable to initialise new custom repository.")
-	fails=$(("$fails" + 1))
+	fails=$(($fails + 1))
 fi
 if [ ! -r "$data" ]; then
 	(>&2 echo "FAIL: Unable to initialise new custom repository.")
-	fails=$(("$fails" + 1))
+	fails=$(($fails + 1))
 fi
-if [ "$(wc -c "$key")" -lt 1 ]; then
+if [ "$(wc -c "$key" | awk '{print $1}')" -lt 1 ]; then
 	(>&2 echo "FAIL: Unable to initialise new custom repository.")
-	fails=$(("$fails" + 1))
+	fails=$(($fails + 1))
 fi
-if [ "$(wc -c "$data")" -lt 1 ]; then
+if [ "$(wc -c "$data" | awk '{print $1}')" -lt 1 ]; then
 	(>&2 echo "FAIL: Unable to initialise new custom repository.")
-	fails=$(("$fails" + 1))
+	fails=$(($fails + 1))
 fi
 
 # TODO: Test help
