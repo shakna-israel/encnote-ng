@@ -32,7 +32,7 @@ For further specific help, see:
 
 	./encnote8 --helpinfo "$THING"
 
-The CLI tool is fairly advanced, and supports things like Lua hooks, allowing you to modify behaviour and so on, and has feature-parity with anything that can be done by running a command.
+The CLI tool is fairly advanced, and supports things like Lua hooks & custom commands, allowing you to modify behaviour and so on, and the Lua API has feature-parity with anything that can be done by running a command.
 
 ---
 
