@@ -138,6 +138,7 @@ bool encrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 
 	if(status != 0) {
 		// Lua error!
+		fprintf(stderr, "%s\n", "ERROR: Lua unable to dump keyfile.");
 		sodium_memzero(ciphertext, CIPHERTEXT_LEN);
 		free(ciphertext);
 		free(f.content);
@@ -151,11 +152,13 @@ bool encrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	FILE* keyfile_f = fopen(keyfile, "wb");
 	if(keyfile_f == NULL) {
 		// Unable to get a lock...
+		fprintf(stderr, "%s\n", "ERROR: Unable to get keyfile lock.");
 		return false;
 	}
 	size_t written = fwrite(keyfile_data, sizeof(char), length, keyfile_f);
 	if(written != length) {
 		// Wrote the wrong number of bytes!
+		fprintf(stderr, "%s\n", "ERROR: Wrong number of bytes written for keyfile!");
 		return false;
 	}
 
@@ -168,11 +171,13 @@ bool encrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	FILE* datafile_f = fopen(datafile, "wb");
 	if(datafile_f == NULL) {
 		// Unable to get a lock...
+		fprintf(stderr, "%s\n", "ERROR: Unable to get datafile lock.");
 		return false;
 	}
 	written = fwrite(ciphertext, sizeof(unsigned char), CIPHERTEXT_LEN, datafile_f);
 	if(written != CIPHERTEXT_LEN) {
 		// Wrote the wrong number of bytes!
+		fprintf(stderr, "%s\n", "ERROR: Wrong number of bytes written for datafile!");
 		return false;
 	}
 	fclose(datafile_f);
