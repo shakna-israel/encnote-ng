@@ -2,6 +2,8 @@ image: debian/stable
 packages:
   - lua5.3
   - lua5.3-dev
+  - libsodium
+  - libsodium-dev
   - xxd
   - build-essential
 sources:
