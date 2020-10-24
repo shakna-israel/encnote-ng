@@ -38,6 +38,10 @@ utilities.h:
 customcommand.h:
 	xxd -i src/custom_command.lua > include/customcommand.h
 
+.PHONY: test
+test:
+	sh test/cli_test.sh
+
 clean:
 	-rm include/cli.h
 	-rm include/pattern.h
