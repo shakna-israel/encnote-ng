@@ -66,14 +66,16 @@ void run_clone_mode(lua_State* L, const char* filename, const char* destination)
 		return;
 	}
 
-	// TODO: Replace this hack with actually handling a table correctly
-	lua_pushstring(L, filename);
-	lua_setglobal(L, "filename");
+	lua_getglobal(L, "ENCNOTE_DATA");
+	lua_getfield(L, -1, filename);
+	// TODO: Type check...
+	size_t file_length = 0;
+	const char* file_str = lua_tolstring(L, -1, &file_length);
 
+	lua_getglobal(L, "ENCNOTE_DATA");
 	lua_pushstring(L, destination);
-	lua_setglobal(L, "destination");
-
-	luaL_dostring(L, "ENCNOTE_DATA[destination] = ENCNOTE_DATA[filename]; destination=nil; filename=nil;");
+	lua_pushlstring(L, file_str, file_length);
+	lua_settable(L, -3);
 }
 
 void run_rename_mode(lua_State* L, const char* filename, const char* destination) {
