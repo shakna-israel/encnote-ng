@@ -2,9 +2,14 @@ LIBSODIUM=`pkg-config --libs --cflags libsodium`
 LIBLUA=`pkg-config --libs --cflags lua5.3`
 INCLUDES=-Iinclude
 OUTNAME=encnote8
+PREFIX=/usr/local/bin/
 
 all: cli.h pattern.h precommand.h postcommand.h preencrypthook.h setpaths.h utilities.h customcommand.h
 	$(CC) -g $(LIBSODIUM) $(LIBLUA) -lrt $(INCLUDES) src/encnote8.c src/main.c -o $(OUTNAME)
+
+.PHONY: install
+install: all
+	install $(OUTNAME) $(PREFIX)
 
 .PHONY: cli.h
 cli.h:
