@@ -794,6 +794,10 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("\t\t\tAll normal printable characters.\n");
 			printf("\t\t+ :ascii:\n");
 			printf("\t\t\tAll ASCII set characters.\n");
+			printf("\t\t+ :asciiwhitespace:\n");
+			printf("\t\t\tAll ASCII set whitespace characters.\n");
+			printf("\t\t+ :asciivisible:\n");
+			printf("\t\t\tAll ASCII set non-whitespace characters.\n");
 			printf("\t\t+ :alnum:\n");
 			printf("\t\t\tAll Latin alphabet characters and Arabic numbers.\n");
 			printf("\t\t+ :alpha:\n");

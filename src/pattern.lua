@@ -8,15 +8,30 @@ expand_pattern = function(pattern)
 	end)
 
 	-- :ascii: - All (non-extended) ASCII characters
-	local ascii_space = {}
-	for i=0, 127 do
+	local ascii_visible = {}
+	local ascii_whitespace = {}
+	-- :asciivisible:
+	for i=33, 126 do
 		if string.char(i) == '%' then
-			ascii_space[#ascii_space + 1] = '%%'
+			ascii_visible[#ascii_visible + 1] = '%%'
 		else
-			ascii_space[#ascii_space + 1] = string.char(i)
+			ascii_visible[#ascii_visible + 1] = string.char(i)
 		end
 	end
-	pattern = string.gsub(pattern, "%:ascii%:", table.concat(ascii_space))
+	-- :asciiwhitespace:
+	for i=0, 32 do
+		ascii_whitespace[#ascii_whitespace + 1] = string.char(i)
+	end
+	ascii_whitespace[#ascii_whitespace + 1] = string.char(127)
+
+	-- :ascii:
+	pattern = string.gsub(pattern, "%:ascii%:", ":asciivisible::asciiwhitespace:")
+
+	-- :asciiwhitespace:
+	pattern = string.gsub(pattern, "%:asciiwhitespace%:", table.concat(ascii_whitespace))
+
+	-- :asciivisible:
+	pattern = string.gsub(pattern, "%:asciivisible%:", table.concat(ascii_visible))
 
 	-- :print: - all printable characters, including space
 	pattern = string.gsub(pattern, "%:print%:", ":alpha::space::xdigit::punct:")
