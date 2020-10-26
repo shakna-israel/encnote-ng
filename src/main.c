@@ -92,16 +92,29 @@ void run_rename_mode(lua_State* L, const char* filename, const char* destination
 		return;
 	}
 
-	// TODO: Replace this hack with actually handling a table correctly
-	lua_pushstring(L, filename);
-	lua_setglobal(L, "filename");
+	// Get the data
+	lua_getglobal(L, "ENCNOTE_DATA");
+	lua_getfield(L, -1, filename);
+	int t = lua_type(L, -1);
+	if(t != LUA_TSTRING) {
+		fprintf(stderr, "%s\n", "ERROR: Rename failed. ENCNOTE_DATA appears to be corrupt.\n");
+		return;
+	}
 
+	size_t file_length = 0;
+	const char* file_str = lua_tolstring(L, -1, &file_length);
+
+	// Create the new position
+	lua_getglobal(L, "ENCNOTE_DATA");
 	lua_pushstring(L, destination);
-	lua_setglobal(L, "destination");
+	lua_pushlstring(L, file_str, file_length);
+	lua_settable(L, -3);
 
-	luaL_dostring(L, "ENCNOTE_DATA[destination] = ENCNOTE_DATA[filename];");
-	luaL_dostring(L, "ENCNOTE_DATA[filename] = nil;");
-	luaL_dostring(L, "filename=nil;destination=nil;");
+	// Delete the old position
+	lua_getglobal(L, "ENCNOTE_DATA");
+	lua_pushstring(L, filename);
+	lua_pushnil(L);
+	lua_settable(L, -3);
 }
 
 void run_copy_mode(lua_State* L, const char* filename, const char* destination) {
