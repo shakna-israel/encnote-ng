@@ -496,14 +496,27 @@ int LuaMemoryFile(lua_State* L) {
 }
 
 int LuaMemoryFileClose(lua_State* L) {
-	// TODO: Check that L1 is a table...
+	// Check that L1 is a table...
+	int t = lua_type(L, 1);
+	if(t != LUA_TTABLE) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
 
 	lua_getfield(L, 1, "filename");
-	// TODO: Type check...
+	t = lua_type(L, -1);
+	if(t != LUA_TSTRING) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
 	const char* filename = lua_tostring(L, -1);
 
 	lua_getfield(L, 1, "anon");
-	// TODO: Type check...
+	t = lua_type(L, -1);
+	if(t != LUA_TSTRING) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
 	const char* anon_name = lua_tostring(L, -1);
 
 	// Delete the file securely
@@ -512,7 +525,9 @@ int LuaMemoryFileClose(lua_State* L) {
 	if(f == NULL) {
 		// The file has disappeared!
 		shm_unlink(anon_name);
-		return 0;
+
+		lua_pushboolean(L, true);
+		return 1;
 	}
 	// 0 the file out...
 	fseek(f, 0L, SEEK_END);
@@ -526,7 +541,8 @@ int LuaMemoryFileClose(lua_State* L) {
 	if(f == NULL) {
 		// The file has disappeared!
 		shm_unlink(anon_name);
-		return 0;
+		lua_pushboolean(L, true);
+		return 1;
 	}
 
 	for(size_t i = 0; i < 150; i++) {
@@ -541,7 +557,8 @@ int LuaMemoryFileClose(lua_State* L) {
 	// Truncate and kill
 	truncate(filename, 0);
 	shm_unlink(anon_name);
-	return 0;
+	lua_pushboolean(L, true);
+	return 1;
 }
 
 void run_help(const char* progname, const char* helpstring) {
