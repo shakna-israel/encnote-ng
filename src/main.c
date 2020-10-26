@@ -29,6 +29,8 @@ void run_delete_mode(lua_State* L, const char* filename) {
 		fprintf(stderr, "%s\n", "ERROR: Delete failed. No `--file` given.");
 		return;
 	}
+
+	// TODO: Replace this hack with actually handling a table correctly
 	lua_pushstring(L, filename);
 	lua_setglobal(L, "filename");
 
@@ -65,6 +67,7 @@ void run_clone_mode(lua_State* L, const char* filename, const char* destination)
 		return;
 	}
 
+	// TODO: Replace this hack with actually handling a table correctly
 	lua_pushstring(L, filename);
 	lua_setglobal(L, "filename");
 
@@ -84,6 +87,7 @@ void run_rename_mode(lua_State* L, const char* filename, const char* destination
 		return;
 	}
 
+	// TODO: Replace this hack with actually handling a table correctly
 	lua_pushstring(L, filename);
 	lua_setglobal(L, "filename");
 
@@ -106,6 +110,7 @@ void run_copy_mode(lua_State* L, const char* filename, const char* destination) 
 	}
 
 	// Read the file...
+	// TODO: Replace this hack with actually handling a table correctly
 	lua_pushstring(L, filename);
 	lua_setglobal(L, "filename");
 
@@ -152,6 +157,7 @@ void run_generate_mode(lua_State* L, const char* argfile, size_t length, char* p
 
 void run_view_mode(lua_State* L, const char* argfile) {
 	if(argfile != NULL) {
+		// TODO: Replace this hack with actually handling a table correctly
 		lua_pushstring(L, argfile);
 		lua_setglobal(L, "argfile");
 
@@ -237,6 +243,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	// Write the data...
 	FILE* f = fdopen(fd, "wb");
 
+	// TODO: Replace this hack with actually handling a table correctly
 	lua_pushstring(L, argfile);
 	lua_setglobal(L, "argfile");
 
@@ -303,6 +310,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	free(com_buf);
 
 	// Read file data back.
+	// TODO: Replace this hack with actually handling a table correctly
 	lua_pushstring(L, filename);
 	lua_setglobal(L, "filepath");
 	lua_pushstring(L, argfile);
