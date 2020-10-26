@@ -537,6 +537,8 @@ int LuaMemoryFile(lua_State* L) {
 		lua_settable(L, -3);
 	}
 
+	// TODO: Add closing __gc metamethod to "file" key
+
 	return 1;
 }
 
@@ -1461,7 +1463,18 @@ int main(int argc, char* argv[]) {
 	if(luaL_dostring(L, src_pre_command_hook_lua)) {
 		// Errors ocurred!
 		fprintf(stderr, "%s\n%s\n", "ERROR: Loading pre-command hook:", lua_tostring(L, -1));
-		// TODO: Should we abort??
+		free(datafilename);
+		free(keyfilename);
+		free(progname);
+		if(argfile != NULL) {
+			free(argfile);
+		}
+		if(argpattern != NULL) {
+			free(argpattern);
+		}
+		free(datadir);
+		lua_close(L);
+		exit(1);
 	}
 
 	// Check what we want to do...
@@ -1527,7 +1540,18 @@ int main(int argc, char* argv[]) {
 	if(luaL_dostring(L, src_post_command_hook_lua)) {
 		// Errors ocurred!
 		fprintf(stderr, "%s\n%s\n", "ERROR: Loading post-command hook:", lua_tostring(L, -1));
-		// TODO: Should we abort??
+		free(datafilename);
+		free(keyfilename);
+		free(progname);
+		if(argfile != NULL) {
+			free(argfile);
+		}
+		if(argpattern != NULL) {
+			free(argpattern);
+		}
+		free(datadir);
+		lua_close(L);
+		exit(1);
 	}
 
     // Run pre-encrypt hook if it exists...
@@ -1535,7 +1559,18 @@ int main(int argc, char* argv[]) {
     if(luaL_dostring(L, src_pre_encrypt_command_hook_lua)) {
     	// Errors ocurred!
 		fprintf(stderr, "%s\n%s\n", "ERROR: Loading pre-encrypt hook:", lua_tostring(L, -1));
-		// TODO: Should we abort??
+		free(datafilename);
+		free(keyfilename);
+		free(progname);
+		if(argfile != NULL) {
+			free(argfile);
+		}
+		if(argpattern != NULL) {
+			free(argpattern);
+		}
+		free(datadir);
+		lua_close(L);
+		exit(1);
     }
 
     // Re-encrypt!
