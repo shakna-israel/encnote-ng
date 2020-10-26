@@ -348,6 +348,192 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	shm_unlink(anon_name);
 }
 
+int LuaMemoryFile(lua_State* L) {
+	// Create an anonymous file...
+
+	// shm_open requires a file name...
+	char anon_name[15 + 1];
+	for(size_t i = 0; i < 15; i++) {
+		char c = 0;
+		while(c == 0 || c > 90 && c < 97) {
+			c = (char)('A' + randombytes_uniform('z') % ('z' - 'A' + 1));
+		}
+		anon_name[i] = c;
+	}
+	anon_name[0] = '/';
+	anon_name[1] = 't';
+	anon_name[2] = 'm';
+	anon_name[3] = 'p';
+	anon_name[4] = '.';
+    anon_name[15] = 0;
+
+    // Try and open our temporary file!
+	mode_t mode = 0600;
+	int fd = shm_open(anon_name, O_RDWR | O_CREAT | O_EXCL, mode);
+
+	// If we got an already existing file, find a new one...
+	while(fd < 0 && errno == EEXIST) {
+		for(size_t i = 0; i < 15; i++) {
+			char c = 0;
+			while(c == 0 || c > 90 && c < 97) {
+				c = (char)('A' + randombytes_uniform('z') % ('z' - 'A' + 1));
+			}
+			anon_name[i] = c;
+		}
+		anon_name[0] = '/';
+		anon_name[1] = 't';
+		anon_name[2] = 'm';
+		anon_name[3] = 'p';
+		anon_name[4] = '.';
+	    anon_name[15] = 0;
+
+		fd = shm_open(anon_name, O_RDWR | O_CREAT | O_EXCL, mode);
+	}
+
+	// Handle safety...
+	if(fd < 0) {
+		switch(errno) {
+			case EACCES:
+				printf("%s\n", "Permission denied.");
+				break;
+			case EEXIST:
+				printf("%s\n", "Already exists.");
+				break;
+			case EINVAL:
+				printf("%s\n", "Invalid name.");
+				break;
+			case EMFILE:
+				printf("%s\n", "Perprocess limit exceeded.");
+				break;
+			case ENAMETOOLONG:
+				printf("%s\n", "Name too long.");
+				break;
+			case ENFILE:
+				printf("%s\n", "System file limit reached.");
+				break;
+		}
+		// Let the OS clean things up. Something catastrophic when wrong.
+		exit(1);
+	}
+
+	// Write the data...
+	FILE* f = fdopen(fd, "wb");
+
+	const char* key = lua_tostring(L, 1);
+	// TODO: Type check...
+
+	lua_getglobal(L, "ENCNOTE_DATA");
+	lua_getfield(L, -1, key);
+	// TODO: Type check...
+
+	size_t length = 0;
+	const char* str = lua_tolstring(L, -1, &length);
+
+	size_t written = fwrite(str, sizeof(char), length, f);
+	if(written != length) {
+		// Incomplete data...
+		fprintf(stderr, "%s\n", "ERROR: Failed to write information to memory correctly.\n");
+		ftruncate(fd, 0);
+		shm_unlink(anon_name);
+
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	// Find the actual filepath!
+	int MAXSIZE = 0xFFF;
+    char proclnk[0xFFF];
+    char filename[0xFFF];
+    ssize_t r;
+
+    sprintf(proclnk, "/proc/self/fd/%d", fd);
+    r = readlink(proclnk, filename, MAXSIZE);
+    if(r < 0) {
+    	// Fail
+    	fprintf(stderr, "%s\n", "ERROR: Failed to read memory file location correctly.\n");
+		ftruncate(fd, 0);
+		shm_unlink(anon_name);
+		exit(1);
+    }
+    filename[r] = '\0';
+
+    // Finish writing
+	fclose(f);
+
+	lua_createtable(L, 0, 0);
+
+	// Push the shm name...
+	lua_pushstring(L, "anon");
+	lua_pushstring(L, anon_name);
+	lua_settable(L, -3);
+
+	// Push the file name...
+	lua_pushstring(L, "filename");
+	lua_pushstring(L, filename);
+	lua_settable(L, -3);
+
+	// Push the file pointer...
+	lua_pushstring(L, "file");
+	lua_getglobal(L, "io");
+	lua_getfield(L, -1, "open");
+	lua_pushstring(L, filename);
+	lua_pcall(L, 1, 1, 0);
+
+	lua_remove(L, -2); // Remove the io table
+	lua_settable(L, -3);
+
+	return 1;
+}
+
+int LuaMemoryFileClose(lua_State* L) {
+	// TODO: Check that L1 is a table...
+
+	lua_getfield(L, 1, "filename");
+	// TODO: Type check...
+	const char* filename = lua_tostring(L, -1);
+
+	lua_getfield(L, 1, "anon");
+	// TODO: Type check...
+	const char* anon_name = lua_tostring(L, -1);
+
+	// Delete the file securely
+
+	FILE* f = fopen(filename, "rb");
+	if(f == NULL) {
+		// The file has disappeared!
+		shm_unlink(anon_name);
+		return 0;
+	}
+	// 0 the file out...
+	fseek(f, 0L, SEEK_END);
+	size_t flen = ftell(f);
+	fclose(f);
+	truncate(filename, 0);
+	truncate(filename, flen);
+
+	// 150 rounds of overwriting with random bytes...
+	f = fopen(filename, "wb");
+	if(f == NULL) {
+		// The file has disappeared!
+		shm_unlink(anon_name);
+		return 0;
+	}
+
+	for(size_t i = 0; i < 150; i++) {
+		fseek(f, 0L, SEEK_SET);
+		for(size_t ix = 0; ix < flen; ix++) {
+			fputc(randombytes_uniform(255), f);
+		}
+		fflush(f);
+	}
+	fclose(f);
+
+	// Truncate and kill
+	truncate(filename, 0);
+	shm_unlink(anon_name);
+	return 0;
+}
+
 void run_help(const char* progname, const char* helpstring) {
 	if(helpstring == NULL) {
 		// General usage
@@ -667,6 +853,21 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("CliArgs()\n");
 			printf("Creates a global table `cli_args` by parsing the `arg` table in the same manner as the usual CLI parser.\n");
 			printf("Returns nil.\n");
+			fputc('\n', stdout);
+
+			printf("MemFile(key)\n");
+			printf("Returns a table containing utilities for working on a given key as a file:\n");
+			printf("The field `file` contains a file pointer.\n");
+			printf("The field `anon` cannot be modified without errors.\n");
+			printf("The field `filename` cannot be modified without errors.\n");
+			printf("The field `filename` contains the filename, and can be passed to other things down the line.\n");
+			printf("WARNING: The returned table _must_ be passed to MemFileClose at some point!\n");
+			printf("WARNING: Does _not_ write back any data to ENCNOTE_DATA[key].\n");
+			fputc('\n', stdout);
+
+			printf("MemFileClose(mem)\n");
+			printf("Safely closes a given memory file from a table created by MemFile.\n");
+			printf("Any open file pointers will become invalid after calling.\n");
 			fputc('\n', stdout);
 
 			printf("utilities.in_sequence(value, table)\n");
@@ -1046,6 +1247,8 @@ int main(int argc, char* argv[]) {
 	lua_register(L, "Decrypt", LuaDecrypt);
 	lua_register(L, "Encrypt", LuaEncrypt);
 	lua_register(L, "CliArgs", LuaCli);
+	lua_register(L, "MemFile", LuaMemoryFile);
+	lua_register(L, "MemFileClose", LuaMemoryFileClose);
 
 	// Expose a raw arg table...
 	lua_createtable(L, 0, 0);
