@@ -30,11 +30,10 @@ void run_delete_mode(lua_State* L, const char* filename) {
 		return;
 	}
 
-	// TODO: Replace this hack with actually handling a table correctly
+	lua_getglobal(L, "ENCNOTE_DATA");
 	lua_pushstring(L, filename);
-	lua_setglobal(L, "filename");
-
-	luaL_dostring(L, "ENCNOTE_DATA[filename] = nil; filename=nil;");
+	lua_pushnil(L);
+	lua_settable(L, -3);
 }
 
 bool run_custom_mode(lua_State* L) {
