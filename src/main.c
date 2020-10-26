@@ -175,11 +175,24 @@ void run_generate_mode(lua_State* L, const char* argfile, size_t length, char* p
 
 void run_view_mode(lua_State* L, const char* argfile) {
 	if(argfile != NULL) {
-		// TODO: Replace this hack with actually handling a table correctly
-		lua_pushstring(L, argfile);
-		lua_setglobal(L, "argfile");
 
-		luaL_dostring(L, "print(ENCNOTE_DATA[argfile] or ''); argfile=nil;");
+		lua_getglobal(L, "ENCNOTE_DATA");
+		lua_getfield(L, -1, argfile);
+		int t = lua_type(L, -1);
+
+		if(t == LUA_TSTRING) {
+
+			size_t file_length = 0;
+			const char* file_str = lua_tolstring(L, -1, &file_length);
+
+			lua_getglobal(L, "print");
+			lua_pushlstring(L, file_str, file_length);
+			lua_pcall(L, 1, 0, 0);
+		} else {
+			lua_getglobal(L, "print");
+			lua_pushstring(L, "");
+			lua_pcall(L, 1, 0, 0);
+		}
 	} else {
 		fprintf(stderr, "%s\n", "ERROR: No --file supplied.");
 	}
