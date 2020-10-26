@@ -128,18 +128,18 @@ void run_copy_mode(lua_State* L, const char* filename, const char* destination) 
 	}
 
 	// Read the file...
-	// TODO: Replace this hack with actually handling a table correctly
-	lua_pushstring(L, filename);
-	lua_setglobal(L, "filename");
-
-	luaL_dostring(L, "local f = io.open(filename);"
-	"if f ~= nil then"
-	"	local x = f:read(\"*all\");"
-	"	f:close();"
-	"	return x;"
-	"else"
-	"	return false;"
+	luaL_dostring(L, "return function(filename)"
+		"local f = io.open(filename);"
+		"if f ~= nil then "
+			"local x = f:read(\"*all\");"
+			"f:close();"
+			"return x;"
+		" else "
+			"return false;"
+		"end "
 	"end");
+	lua_pushstring(L, filename);
+	lua_pcall(L, 1, 1, 0);
 
 	int t = lua_type(L, -1);
 	if(t != LUA_TSTRING) {
