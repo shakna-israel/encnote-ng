@@ -687,6 +687,11 @@ void run_help(const char* progname, const char* helpstring) {
 			printf("utilities.ordered_pairs(tbl)\n");
 			printf("An iterator like `pairs`, but with an ordered outcome.\n");
 			fputc('\n', stdout);
+
+			printf("utilities.run(statement, args...)\n");
+			printf("Call a system command with a list of the given arguments.\n");
+			printf("Returns the status code (number), and then any stdout output (string).\n");
+			fputc('\n', stdout);
 		} else
 
 		{

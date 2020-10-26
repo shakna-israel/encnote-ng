@@ -66,3 +66,26 @@ utilities.ordered_pairs = function(tbl)
 		end
 	end
 end
+
+utilities.run = function(statement, ...)
+	-- Bundle arguments into statement...
+	local args = {...}
+	for idx, arg in ipairs(args) do
+		local x = string.format("%q", tostring(arg))
+		x = "'" .. x:sub(2, #x - 1):gsub("'", "\\'") .. "'"
+		statement = statement .. ' ' .. x
+	end
+
+	-- Hack to get the status code...
+	local f = io.popen(statement .. '; echo "-retcode:$?"', 'r')
+
+	local s = f:read("*all")
+	f:close()
+
+	local i1, i2, ret = s:find('%-retcode:(%d+)\n$')
+	s = s:sub(1, i1-1)
+
+	ret = tonumber(ret) or ret
+
+	return ret, s
+end
