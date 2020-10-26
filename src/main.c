@@ -155,9 +155,6 @@ void run_copy_mode(lua_State* L, const char* filename, const char* destination) 
 		lua_pushlstring(L, file_str, file_length);
 		lua_settable(L, -3);
 	}
-
-	// Remove our temporary var...
-	luaL_dostring(L, "filename=nil;");
 }
 
 void run_generate_mode(lua_State* L, const char* argfile, size_t length, char* pattern) {
