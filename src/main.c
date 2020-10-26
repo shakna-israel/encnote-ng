@@ -20,20 +20,27 @@ void run_dump_mode(lua_State* L) {
 	free(f.content);
 }
 
-void run_ls_mode(lua_State* L) {
-	luaL_dostring(L, "for k, v in utilities.ordered_pairs(ENCNOTE_DATA) do print(#v, k) end");
+bool run_ls_mode(lua_State* L) {
+	if(luaL_dostring(L, "for k, v in utilities.ordered_pairs(ENCNOTE_DATA) do print(#v, k) end")) {
+		fprintf(stderr, "%s\n", "ERROR: Ls failed. Is ENCNOTE_DATA corrupt?\n");
+		return false;
+	}
+
+	return true;
 }
 
-void run_delete_mode(lua_State* L, const char* filename) {
+bool run_delete_mode(lua_State* L, const char* filename) {
 	if(filename == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: Delete failed. No `--file` given.");
-		return;
+		return false;
 	}
 
 	lua_getglobal(L, "ENCNOTE_DATA");
 	lua_pushstring(L, filename);
 	lua_pushnil(L);
 	lua_settable(L, -3);
+
+	return true;
 }
 
 int run_custom_mode(lua_State* L) {
@@ -61,14 +68,14 @@ int run_custom_mode(lua_State* L) {
 	return true;
 }
 
-void run_clone_mode(lua_State* L, const char* filename, const char* destination) {
+bool run_clone_mode(lua_State* L, const char* filename, const char* destination) {
 	if(filename == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: Clone failed. No `--file` given.");
-		return;
+		return false;
 	}
 	if(destination == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: Clone failed. No `--destination` given.");
-		return;
+		return false;
 	}
 
 	lua_getglobal(L, "ENCNOTE_DATA");
@@ -76,7 +83,7 @@ void run_clone_mode(lua_State* L, const char* filename, const char* destination)
 	int t = lua_type(L, -1);
 	if(t != LUA_TSTRING) {
 		fprintf(stderr, "%s\n", "ERROR: Clone failed. ENCNOTE_DATA appears to be corrupt.\n");
-		return;
+		return false;
 	}
 	size_t file_length = 0;
 	const char* file_str = lua_tolstring(L, -1, &file_length);
@@ -85,16 +92,18 @@ void run_clone_mode(lua_State* L, const char* filename, const char* destination)
 	lua_pushstring(L, destination);
 	lua_pushlstring(L, file_str, file_length);
 	lua_settable(L, -3);
+
+	return true;
 }
 
-void run_rename_mode(lua_State* L, const char* filename, const char* destination) {
+bool run_rename_mode(lua_State* L, const char* filename, const char* destination) {
 	if(filename == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: Rename failed. No `--file` given.");
-		return;
+		return false;
 	}
 	if(destination == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: Rename failed. No `--destination` given.");
-		return;
+		return false;
 	}
 
 	// Get the data
@@ -103,7 +112,7 @@ void run_rename_mode(lua_State* L, const char* filename, const char* destination
 	int t = lua_type(L, -1);
 	if(t != LUA_TSTRING) {
 		fprintf(stderr, "%s\n", "ERROR: Rename failed. ENCNOTE_DATA appears to be corrupt.\n");
-		return;
+		return false;
 	}
 
 	size_t file_length = 0;
@@ -120,19 +129,22 @@ void run_rename_mode(lua_State* L, const char* filename, const char* destination
 	lua_pushstring(L, filename);
 	lua_pushnil(L);
 	lua_settable(L, -3);
+
+	return true;
 }
 
-void run_copy_mode(lua_State* L, const char* filename, const char* destination) {
+bool run_copy_mode(lua_State* L, const char* filename, const char* destination) {
 	if(filename == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: Copy failed. No `--file` given.");
-		return;
+		return false;
 	}
 	if(destination == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: Copy failed. No `--destination` given.");
-		return;
+		return false;
 	}
 
 	// Read the file...
+	// TODO: Safety
 	luaL_dostring(L, "return function(filename)"
 		"local f = io.open(filename);"
 		"if f ~= nil then "
@@ -149,6 +161,8 @@ void run_copy_mode(lua_State* L, const char* filename, const char* destination) 
 	int t = lua_type(L, -1);
 	if(t != LUA_TSTRING) {
 		// Fail to open file...
+		fprintf(stderr, "%s\n", "ERROR: Copy failed. Unable to open file.");
+		return false;
 	} else {
 		// Get the value and its length
 		size_t file_length = 0;
@@ -160,22 +174,27 @@ void run_copy_mode(lua_State* L, const char* filename, const char* destination) 
 		lua_pushlstring(L, file_str, file_length);
 		lua_settable(L, -3);
 	}
+
+	return true;
 }
 
-void run_generate_mode(lua_State* L, const char* argfile, size_t length, char* pattern) {
+bool run_generate_mode(lua_State* L, const char* argfile, size_t length, char* pattern) {
 	if(argfile == NULL) {
 		// Error...
 		fprintf(stderr, "ERROR: Generate failed. No `--file` given.\n");
-		return;
+		return false;
 	}
 	
 	if(generate(L, argfile, length, pattern) != true) {
 		// Generate failed for unknown reason.
 		fprintf(stderr, "ERROR: Generate failed.\n");
+		return false;
 	}
+
+	return true;
 }
 
-void run_view_mode(lua_State* L, const char* argfile) {
+bool run_view_mode(lua_State* L, const char* argfile) {
 	if(argfile != NULL) {
 
 		lua_getglobal(L, "ENCNOTE_DATA");
@@ -197,13 +216,16 @@ void run_view_mode(lua_State* L, const char* argfile) {
 		}
 	} else {
 		fprintf(stderr, "%s\n", "ERROR: No --file supplied.");
+		return false;
 	}
+
+	return true;
 }
 
-void run_edit_mode(lua_State* L, const char* argfile) {
+bool run_edit_mode(lua_State* L, const char* argfile) {
 	if(argfile == NULL) {
 		fprintf(stderr, "%s\n", "ERROR: No --file supplied.");
-		return;
+		return false;
 	}
 
 	// Create an anonymous file...
@@ -362,7 +384,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	if(f == NULL) {
 		// The file has disappeared!
 		shm_unlink(anon_name);
-		return;
+		return true;
 	}
 	// 0 the file out...
 	fseek(f, 0L, SEEK_END);
@@ -376,7 +398,7 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	if(f == NULL) {
 		// The file has disappeared!
 		shm_unlink(anon_name);
-		return;
+		return true;
 	}
 
 	for(size_t i = 0; i < 150; i++) {
@@ -391,6 +413,8 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	// Truncate and kill
 	truncate(filename, 0);
 	shm_unlink(anon_name);
+
+	return true;
 }
 
 int LuaMemoryFile(lua_State* L) {
@@ -994,14 +1018,11 @@ enum MODES {
 // TODO: grep-like search file
 // TODO: find-like search for file
 
-// TODO: Lua-based user commands
-// - Need to expose our run commands as an API...
-// - And expose BetterRandom...
-
 // TODO: arbitrary command
 // TODO: Example git-hooks...
 
 int LuaCli(lua_State* L) {
+	// TODO: Safety
 	luaL_dostring(L, src_cli_lua);
 
 	return 0;
@@ -1035,6 +1056,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Parse arguments into cli_args table
+	// TODO: Safety
 	luaL_dostring(CLI_LUA, src_cli_lua);
 
 	lua_getglobal(CLI_LUA, "cli_args");
@@ -1477,51 +1499,41 @@ int main(int argc, char* argv[]) {
 		exit(1);
 	}
 
+	bool command_status = true;
+
 	// Check what we want to do...
     switch(current_mode) {
     	case DUMP_MODE:
     		run_dump_mode(L);
     		break;
     	case LS_MODE:
-    		run_ls_mode(L);
+    		command_status = run_ls_mode(L);
     		break;
     	case GENERATE_MODE:
-    		run_generate_mode(L, argfile, arglength, argpattern);
+    		command_status = run_generate_mode(L, argfile, arglength, argpattern);
     		break;
     	case VIEW_MODE:
-    		run_view_mode(L, argfile);
+    		command_status = run_view_mode(L, argfile);
     		break;
     	case EDIT_MODE:
-    		run_edit_mode(L, argfile);
+    		command_status = run_edit_mode(L, argfile);
     		break;
     	case COPY_MODE:
-    		run_copy_mode(L, argfile, destination);
+    		command_status = run_copy_mode(L, argfile, destination);
     		break;
     	case CLONE_MODE:
-    		run_clone_mode(L, argfile, destination);
+    		command_status = run_clone_mode(L, argfile, destination);
     		break;
     	case RENAME_MODE:
-    		run_rename_mode(L, argfile, destination);
+    		command_status = run_rename_mode(L, argfile, destination);
     		break;
     	case DELETE_MODE:
-    		run_delete_mode(L, argfile);
+    		command_status = run_delete_mode(L, argfile);
     		break;
     	case UNKNOWN_MODE:
     		switch(run_custom_mode(L)) {
     			case false:
-	    			run_help(progname, "mode");
-	    			free(datafilename);
-					free(keyfilename);
-					free(progname);
-					if(argfile != NULL) {
-						free(argfile);
-					}
-					if(argpattern != NULL) {
-						free(argpattern);
-					}
-					free(datadir);
-					lua_close(L);
-	    			exit(1);
+	    			command_status = false;
     				break;
     			case 3:
     				exit(1);
@@ -1533,6 +1545,22 @@ int main(int argc, char* argv[]) {
     		fprintf(stderr, "%s\n", "ERROR: Unreachable mode reached.\n");
     		exit(1);
     		break;
+    }
+
+    if(command_status == false) {
+    	// Errors ocurred!
+		free(datafilename);
+		free(keyfilename);
+		free(progname);
+		if(argfile != NULL) {
+			free(argfile);
+		}
+		if(argpattern != NULL) {
+			free(argpattern);
+		}
+		free(datadir);
+		lua_close(L);
+		exit(1);
     }
 
     // Run post-command hook if it exists...
