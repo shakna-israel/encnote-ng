@@ -25,8 +25,11 @@ struct Field get_field(lua_State* LuaState, const char* key, size_t key_len) {
 	lua_pushlstring(LuaState, key, key_len);
 	lua_setglobal(LuaState, "key");
 
+	// TODO: Don't use a global here...
+
 	// Place the value at the top of the stack...
 	luaL_dostring(LuaState, "return ENCNOTE_DATA[key]");
+	// TODO: Check success
 
 	// Get the value and its length
 	size_t length = 0;
@@ -55,6 +58,7 @@ int LuaDump(lua_State* L) {
 	"end\n"
 	"x = x .. '}'\n"
 	"return x");
+	// TODO: Check success
 
 	return 1;
 }
@@ -355,6 +359,8 @@ int LuaGenerateString(lua_State* L) {
 	lua_register(L2, "BetterRandom", LuaRandom);
 
 	luaL_dostring(L2, src_pattern_lua);
+	// TODO: Check success
+	// TODO: Push this string and use load, so that 0s dont bug it
 
 	lua_pushstring(L2, pattern);
 	lua_setglobal(L2, "pattern");
@@ -363,6 +369,7 @@ int LuaGenerateString(lua_State* L) {
 	lua_setglobal(L2, "length");
 
 	luaL_dostring(L2, "return generate_string(length, pattern)");
+	// TODO: Do this without globals
 	// TODO: Error check
 
 	size_t pat_length = 0;
@@ -394,6 +401,8 @@ bool generate(lua_State* LuaState, const char* name, size_t length, char* patter
 	lua_register(L, "BetterRandom", LuaRandom);
 
 	luaL_dostring(L, src_pattern_lua);
+	// TODO: Check success
+	// TODO: Push and use load, so pattern can contain 0s
 
 	lua_pushstring(L, pattern);
 	lua_setglobal(L, "pattern");
@@ -402,6 +411,9 @@ bool generate(lua_State* LuaState, const char* name, size_t length, char* patter
 	lua_setglobal(L, "length");
 
 	luaL_dostring(L, "return generate_string(length, pattern)");
+	// TODO: Check success
+
+	// TODO: Do this without globals...
 
 	int t = lua_type(L, -1);
 	if(t != LUA_TSTRING) {
