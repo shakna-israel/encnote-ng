@@ -420,11 +420,19 @@ int LuaMemoryFile(lua_State* L) {
 	FILE* f = fdopen(fd, "wb");
 
 	const char* key = lua_tostring(L, 1);
-	// TODO: Type check...
+	int t = lua_type(L, -1);
+	if(t != LUA_TSTRING) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
 
 	lua_getglobal(L, "ENCNOTE_DATA");
 	lua_getfield(L, -1, key);
-	// TODO: Type check...
+	t = lua_type(L, -1);
+	if(t != LUA_TSTRING) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
 
 	size_t length = 0;
 	const char* str = lua_tolstring(L, -1, &length);
@@ -453,7 +461,9 @@ int LuaMemoryFile(lua_State* L) {
     	fprintf(stderr, "%s\n", "ERROR: Failed to read memory file location correctly.\n");
 		ftruncate(fd, 0);
 		shm_unlink(anon_name);
-		exit(1);
+		
+		lua_pushboolean(L, false);
+		return 1;
     }
     filename[r] = '\0';
 
@@ -477,10 +487,10 @@ int LuaMemoryFile(lua_State* L) {
 	lua_getglobal(L, "io");
 	lua_getfield(L, -1, "open");
 	lua_pushstring(L, filename);
-	lua_pcall(L, 1, 1, 0);
-
-	lua_remove(L, -2); // Remove the io table
-	lua_settable(L, -3);
+	if(lua_pcall(L, 1, 1, 0) == 0) {
+		lua_remove(L, -2); // Remove the io table
+		lua_settable(L, -3);
+	}
 
 	return 1;
 }
