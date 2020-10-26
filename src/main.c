@@ -1453,8 +1453,12 @@ int main(int argc, char* argv[]) {
 	luaL_dostring(L, "load(setpaths)();setpaths=nil;");
 
 	// Run pre-command hook if it exists...
-	luaL_dostring(L, src_pre_command_hook_lua);
-	// TODO: Check and print errors...
+	// TODO: Instead of dostring, we should probably use `load` here, so we can have 0s inside the program.
+	if(luaL_dostring(L, src_pre_command_hook_lua)) {
+		// Errors ocurred!
+		fprintf(stderr, "%s\n%s\n", "ERROR: Loading pre-command hook:", lua_tostring(L, -1));
+		// TODO: Should we abort??
+	}
 
 	// Check what we want to do...
     switch(current_mode) {
@@ -1510,12 +1514,20 @@ int main(int argc, char* argv[]) {
     }
 
     // Run post-command hook if it exists...
-	luaL_dostring(L, src_post_command_hook_lua);
-	// TODO: Check and print errors...
+    // TODO: Instead of dostring, we should probably use `load` here, so we can have 0s inside the program.
+	if(luaL_dostring(L, src_post_command_hook_lua)) {
+		// Errors ocurred!
+		fprintf(stderr, "%s\n%s\n", "ERROR: Loading post-command hook:", lua_tostring(L, -1));
+		// TODO: Should we abort??
+	}
 
     // Run pre-encrypt hook if it exists...
-    luaL_dostring(L, src_pre_encrypt_command_hook_lua);
-    // TODO: Check and print errors...
+    // TODO: Instead of dostring, we should probably use `load` here, so we can have 0s inside the program.
+    if(luaL_dostring(L, src_pre_encrypt_command_hook_lua)) {
+    	// Errors ocurred!
+		fprintf(stderr, "%s\n%s\n", "ERROR: Loading pre-encrypt hook:", lua_tostring(L, -1));
+		// TODO: Should we abort??
+    }
 
     // Re-encrypt!
     bool e = encrypt_data(L, keyfilename, datafilename);
