@@ -38,6 +38,12 @@ The CLI tool is fairly advanced, and supports things like Lua hooks & custom com
 
 ## Building
 
+### Testing
+
+[![builds.sr.ht status](https://builds.sr.ht/~shakna/encnote-ng.svg)](https://builds.sr.ht/~shakna/encnote-ng?)
+
+The current testing architecture is woefully inadequate.
+
 ### Dependencies:
 
 + Linux (Probably. May work on other UNIX-y systems.)
