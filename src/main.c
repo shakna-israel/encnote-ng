@@ -68,7 +68,11 @@ void run_clone_mode(lua_State* L, const char* filename, const char* destination)
 
 	lua_getglobal(L, "ENCNOTE_DATA");
 	lua_getfield(L, -1, filename);
-	// TODO: Type check...
+	int t = lua_type(L, -1);
+	if(t != LUA_TSTRING) {
+		fprintf(stderr, "%s\n", "ERROR: Clone failed. ENCNOTE_DATA appears to be corrupt.\n");
+		return;
+	}
 	size_t file_length = 0;
 	const char* file_str = lua_tolstring(L, -1, &file_length);
 
