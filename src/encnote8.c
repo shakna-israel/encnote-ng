@@ -208,7 +208,7 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	lua_getfield(L, -1, "key");
 	// Check is string
 	t = lua_type(L, -1);
-	if(t =! LUA_TSTRING) {
+	if(t != LUA_TSTRING) {
 		// Malformed keyfile
 		return false;
 	}
@@ -226,7 +226,7 @@ bool decrypt_data(lua_State* LuaState, const char* keyfile, const char* datafile
 	lua_getfield(L, -1, "nonce");
 	// Check is string
 	t = lua_type(L, -1);
-	if(t =! LUA_TSTRING) {
+	if(t != LUA_TSTRING) {
 		// Malformed keyfile
 		return false;
 	}
