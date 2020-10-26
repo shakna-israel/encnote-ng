@@ -893,6 +893,7 @@ void run_help(const char* progname, const char* helpstring) {
 			fputc('\n', stdout);
 
 			printf("MemFileClose(mem)\n");
+			printf("Returns a boolean for success. On false, you may want to kill everything immediately.\n");
 			printf("Safely closes a given memory file from a table created by MemFile.\n");
 			printf("Any open file pointers will become invalid after calling.\n");
 			fputc('\n', stdout);
