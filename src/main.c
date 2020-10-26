@@ -274,14 +274,19 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	// Write the data...
 	FILE* f = fdopen(fd, "wb");
 
-	// TODO: Replace this hack with actually handling a table correctly
-	lua_pushstring(L, argfile);
-	lua_setglobal(L, "argfile");
+	size_t length;
+	const char* str;
 
-	luaL_dostring(L, "return ENCNOTE_DATA[argfile] or ''");
-
-	size_t length = 0;
-	const char* str = lua_tolstring(L, -1, &length);
+	lua_getglobal(L, "ENCNOTE_DATA");
+	lua_getfield(L, -1, argfile);
+	int t = lua_type(L, -1);
+	if(t == LUA_TSTRING) {
+		length = 0;
+		str = lua_tolstring(L, -1, &length);
+	} else {
+		length = 0;
+		str = "";
+	}
 
 	size_t written = fwrite(str, sizeof(char), length, f);
 	if(written != length) {
@@ -291,8 +296,6 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 		shm_unlink(anon_name);
 		exit(1);
 	}
-	// Forget this...
-	luaL_dostring(L, "argfile=nil");
 
 	// Find the actual filepath!
 	int MAXSIZE = 0xFFF;
@@ -340,15 +343,16 @@ void run_edit_mode(lua_State* L, const char* argfile) {
 	sodium_memzero(com_buf, com_bytes + 1);
 	free(com_buf);
 
-	// Read file data back.
-	// TODO: Replace this hack with actually handling a table correctly
+	// Use Lua to update our data...
+	luaL_dostring(L, "return function(filepath, filename) local f = io.open(filepath);if f ~= nil then ENCNOTE_DATA[filename] = f:read(\"*all\");f:close();end;end");
 	lua_pushstring(L, filename);
-	lua_setglobal(L, "filepath");
 	lua_pushstring(L, argfile);
-	lua_setglobal(L, "filename");
-
-	luaL_dostring(L, "f = io.open(filepath); if f ~= nil then ENCNOTE_DATA[filename] = f:read(\"*all\");f:close();end");
-	luaL_dostring(L, "filepath=nil;filename=nil");
+	if(lua_pcall(L, 2, 0, 0) != 0) {
+		fprintf(stderr, "%s\n", "ERROR: Failed to read from file correctly.");
+		truncate(filename, 0);
+		shm_unlink(anon_name);
+		exit(1);
+	}
 
 	// Delete the file securely
 
