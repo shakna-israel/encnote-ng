@@ -36,7 +36,7 @@ void run_delete_mode(lua_State* L, const char* filename) {
 	lua_settable(L, -3);
 }
 
-bool run_custom_mode(lua_State* L) {
+int run_custom_mode(lua_State* L) {
 	luaL_dostring(L, "return string.format(\"%scommands/%s.lua\", vararg['datadir'], vararg['custommode'])");
 	const char* fname = lua_tostring(L, -1);
 	FILE* f = fopen(fname, "rb");
@@ -53,7 +53,11 @@ bool run_custom_mode(lua_State* L) {
 	// TODO: Do this without a global...
 	lua_pushlstring(L, src_custom_command_lua, src_custom_command_lua_len);
 	lua_setglobal(L, "setcustom");
-	luaL_dostring(L, "(function() local x = load(setcustom)(); setcustom=nil; return x; end)()");
+	if(luaL_dostring(L, "(function() local x = load(setcustom)(); setcustom=nil; return x; end)()")) {
+		// Errors ocurred!
+		fprintf(stderr, "%s\n%s\n", "ERROR: Loading custom command:", lua_tostring(L, -1));
+		return 3;
+	}
 	return true;
 }
 
@@ -1490,20 +1494,25 @@ int main(int argc, char* argv[]) {
     		run_delete_mode(L, argfile);
     		break;
     	case UNKNOWN_MODE:
-    		if(!run_custom_mode(L)) {
-    			run_help(progname, "mode");
-    			free(datafilename);
-				free(keyfilename);
-				free(progname);
-				if(argfile != NULL) {
-					free(argfile);
-				}
-				if(argpattern != NULL) {
-					free(argpattern);
-				}
-				free(datadir);
-				lua_close(L);
-    			exit(1);
+    		switch(run_custom_mode(L)) {
+    			case false:
+	    			run_help(progname, "mode");
+	    			free(datafilename);
+					free(keyfilename);
+					free(progname);
+					if(argfile != NULL) {
+						free(argfile);
+					}
+					if(argpattern != NULL) {
+						free(argpattern);
+					}
+					free(datadir);
+					lua_close(L);
+	    			exit(1);
+    				break;
+    			case 3:
+    				exit(1);
+    				break;
     		}
     		break;
     	default:
